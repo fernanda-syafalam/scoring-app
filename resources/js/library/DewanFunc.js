@@ -1,123 +1,121 @@
 import { isEmpty } from "lodash";
-import { activeRound, getDataGelanggang } from "./ScoreFunc";
+import { activeRound, getArenaData } from "./ScoreFunc";
 
-const pelanggaran = [
-    "teguran-pertama",
-    "teguran-kedua",
-    "binaan-pertama",
-    "binaan-kedua",
-    "peringatan-pertama",
-    "peringatan-kedua",
-    "peringatan-ketiga",
+const FOULS = [
+    "first-warning",
+    "second-warning",
+    "first-coaching",
+    "second-coaching",
+    "first-penalty",
+    "second-penalty",
+    "third-penalty",
 ];
-let bluePenalty = "pertama";
-const peringatan = [
-    "peringatan-pertama",
-    "peringatan-kedua",
-    "peringatan-ketiga",
+let bluePenalty = "first";
+const PENALTIES = [
+    "first-penalty",
+    "second-penalty",
+    "third-penalty",
 ];
-let redPenalty = "pertama";
-let redPelanggaran = [];
-let bluePelanggaran = [];
+let redPenalty = "first";
+let redFouls = [];
+let blueFouls = [];
 let pureScoreRed = 0;
 let pureScoreBlue = 0;
-const rounds = ["round-1", "round-2", "round-3"];
-let peringatanPenaltyBlue = false;
+const ROUNDS = ["round-1", "round-2", "round-3"];
+let bluePenaltyWarning = false;
+let redPenaltyWarning = false;
 
-let peringatanPenaltyRed = false;
-
-const pelanggaranPoint = {
-    pertama: 0,
-    "binaan-pertama": 0,
-    "binaan-kedua": 0,
-    "teguran-pertama": 1,
-    "teguran-kedua": 2,
-    "peringatan-pertama": 5,
-    "peringatan-kedua": 10,
-    "peringatan-ketiga": 0,
+const FOUL_POINTS = {
+    first: 0,
+    "first-coaching": 0,
+    "second-coaching": 0,
+    "first-warning": 1,
+    "second-warning": 2,
+    "first-penalty": 5,
+    "second-penalty": 10,
+    "third-penalty": 0,
 };
-let pelanggaranBiru = ["pertama"];
-let pelanggaranMerah = ["pertama"];
-const buttonAction = [
-    "jatuhan-biru-minus",
-    "jatuhan-biru-plus",
-    "jatuhan-merah-minus",
-    "jatuhan-merah-plus",
-    "peringatan-biru-ketiga",
-    "peringatan-biru-kedua",
-    "binaan-biru-kedua",
-    "teguran-biru-kedua",
-    "peringatan-biru-pertama",
-    "binaan-biru-pertama",
-    "teguran-biru-pertama",
-    "peringatan-merah-ketiga",
-    "peringatan-merah-kedua",
-    "binaan-merah-kedua",
-    "teguran-merah-kedua",
-    "peringatan-merah-pertama",
-    "binaan-merah-pertama",
-    "teguran-merah-pertama",
-    "disk-merah",
-    "disk-biru",
+let blueFoulList = ["first"];
+let redFoulList = ["first"];
+const BUTTON_ACTIONS = [
+    "blue-fall-minus",
+    "blue-fall-plus",
+    "red-fall-minus",
+    "red-fall-plus",
+    "blue-penalty-third",
+    "blue-penalty-second",
+    "blue-coaching-second",
+    "blue-warning-second",
+    "blue-penalty-first",
+    "blue-coaching-first",
+    "blue-warning-first",
+    "red-penalty-third",
+    "red-penalty-second",
+    "red-coaching-second",
+    "red-warning-second",
+    "red-penalty-first",
+    "red-coaching-first",
+    "red-warning-first",
+    "red-disqualification",
+    "blue-disqualification",
 ];
 
 let actionStatus = false;
-const pelanggaranRedElement = {
-    "teguran-pertama": document.getElementById("teguran-merah-pertama"),
-    "teguran-kedua": document.getElementById("teguran-merah-kedua"),
-    "binaan-pertama": document.getElementById("binaan-merah-pertama"),
-    "binaan-kedua": document.getElementById("binaan-merah-kedua"),
-    "peringatan-pertama": document.getElementById("peringatan-merah-pertama"),
-    "peringatan-kedua": document.getElementById("peringatan-merah-kedua"),
-    "peringatan-ketiga": document.getElementById("peringatan-merah-ketiga"),
+const redFoulElements = {
+    "first-warning": document.getElementById("red-warning-first"),
+    "second-warning": document.getElementById("red-warning-second"),
+    "first-coaching": document.getElementById("red-coaching-first"),
+    "second-coaching": document.getElementById("red-coaching-second"),
+    "first-penalty": document.getElementById("red-penalty-first"),
+    "second-penalty": document.getElementById("red-penalty-second"),
+    "third-penalty": document.getElementById("red-penalty-third"),
 };
-const pelanggaranBlueElement = {
-    "teguran-pertama": document.getElementById("teguran-biru-pertama"),
-    "teguran-kedua": document.getElementById("teguran-biru-kedua"),
-    "binaan-pertama": document.getElementById("binaan-biru-pertama"),
-    "binaan-kedua": document.getElementById("binaan-biru-kedua"),
-    "peringatan-pertama": document.getElementById("peringatan-biru-pertama"),
-    "peringatan-kedua": document.getElementById("peringatan-biru-kedua"),
-    "peringatan-ketiga": document.getElementById("peringatan-biru-ketiga"),
+const blueFoulElements = {
+    "first-warning": document.getElementById("blue-warning-first"),
+    "second-warning": document.getElementById("blue-warning-second"),
+    "first-coaching": document.getElementById("blue-coaching-first"),
+    "second-coaching": document.getElementById("blue-coaching-second"),
+    "first-penalty": document.getElementById("blue-penalty-first"),
+    "second-penalty": document.getElementById("blue-penalty-second"),
+    "third-penalty": document.getElementById("blue-penalty-third"),
 };
-const dataDewan = {
+const councilData = {
     blueInput: document.getElementById(`round-1-blueInput`),
     redInput: document.getElementById(`round-1-redInput`),
     redScore: document.getElementById("round-1-redScore"),
     blueScore: document.getElementById("round-1-blueScore"),
 };
-export function updateRoundDewan(round) {
-    dataDewan.blueInput = document.getElementById(`${round}-blueInput`);
-    dataDewan.redInput = document.getElementById(`${round}-redInput`);
-    dataDewan.blueScore = document.getElementById(`${round}-blueScore`);
-    dataDewan.redScore = document.getElementById(`${round}-redScore`);
+export function updateRoundCouncil(round) {
+    councilData.blueInput = document.getElementById(`${round}-blueInput`);
+    councilData.redInput = document.getElementById(`${round}-redInput`);
+    councilData.blueScore = document.getElementById(`${round}-blueScore`);
+    councilData.redScore = document.getElementById(`${round}-redScore`);
 }
 export function enabledAction(status = true) {
     actionStatus = status;
-    buttonAction.map((action) => {
+    BUTTON_ACTIONS.map((action) => {
         const button = document.getElementById(action);
         button.disabled = !status;
     });
 }
 export function handlePenaltyClick(color, penalty) {
-    console.log("🚀 ~ handlePenaltyClick ~ penalty:", penalty);
     return function () {
-        if (peringatan.includes(penalty)) {
+        if (PENALTIES.includes(penalty)) {
             if (color === "red") {
-                if (redPelanggaran.includes(penalty)) {
-                    redPelanggaran = redPelanggaran.filter(
-                        (pelanggaran) => pelanggaran != penalty
+                if (redFouls.includes(penalty)) {
+                    redFouls = redFouls.filter(
+                        (foul) => foul != penalty
                     );
                 } else {
-                    redPelanggaran.push(penalty);
+                    redFouls.push(penalty);
                 }
             } else if (color === "blue") {
-                if (bluePelanggaran.includes(penalty)) {
-                    bluePelanggaran = bluePelanggaran.filter(
-                        (pelanggaran) => pelanggaran != penalty
+                if (blueFouls.includes(penalty)) {
+                    blueFouls = blueFouls.filter(
+                        (foul) => foul != penalty
                     );
                 } else {
-                    bluePelanggaran.push(penalty);
+                    blueFouls.push(penalty);
                 }
             }
         }
@@ -126,12 +124,12 @@ export function handlePenaltyClick(color, penalty) {
         } else if (color === "blue") {
             bluePenalty = penalty;
         }
-        changeIndicatorPelanggaran(color, penalty);
-        pushScore();
-        pushIndicator(color, penalty);
+        changeFoulIndicator(color, penalty);
+        pushScoreUpdate();
+        pushFoulIndicator(color, penalty);
     };
 }
-function pushIndicator(color, penalty) {
+function pushFoulIndicator(color, penalty) {
     axios.post("/penalty", {
         message: {
             color: color,
@@ -145,101 +143,79 @@ export function updateDataScore(event) {
     pureScoreBlue = event.blue_score;
 }
 
-export function cekWinner() {
-    console.log("tes");
-    const red = parseInt(dataDewan["blueScore"].textContent);
-    const blue = parseInt(dataDewan["redScore"].textContent);
+export function checkWinner() {
+    const red = parseInt(councilData["blueScore"].textContent);
+    const blue = parseInt(councilData["redScore"].textContent);
     if (red > blue) {
-        console.log("masuk");
-        updatePertandingan("merah");
+        updateMatch("red");
     } else {
-        console.log("masuk");
-        updatePertandingan("biru");
+        updateMatch("blue");
     }
 }
 
-export function updatePertandingan(winner) {
-    const dataPartai = getDataGelanggang();
+export function updateMatch(winner) {
+    const matchData = getArenaData();
     localStorage.clear();
     axios.post("/operator-update", {
         message: {
-            blueName: dataPartai.namaBiru,
-            redName: dataPartai.namaMerah,
-            blueContingent: dataPartai.kontingenMerah,
-            redContingent: dataPartai.kontingenBiru,
-            babak: dataPartai.babak,
+            blueName: matchData.blueName,
+            redName: matchData.redName,
+            blueContingent: matchData.redContingent,
+            redContingent: matchData.blueContingent,
+            round: matchData.round,
             time: 0,
             activeRound: activeRound.textContent,
             action: winner,
         },
     });
 }
-export function changeRoundDewan(round) {
-    updateRoundDewan(round);
-    console.log("🚀 ~ changeRoundDewan ~ round:", round);
-    updateDataIndicator();
-    pushScore();
+export function changeRoundCouncil(round) {
+    updateRoundCouncil(round);
+    updateFoulIndicator();
+    pushScoreUpdate();
 }
 
-export function updateDataIndicator() {
-    if (redPelanggaran.length > 0) {
-        console.log(
-            "🚀 ~ updateDataIndicator ~ redPelanggaran.length:",
-            redPelanggaran
-        );
-        redPelanggaran.map((pelanggaran) => {
-            // pureScoreRed -= pelanggaranPoint[pelanggaran]
-            pelanggaranMerah = pelanggaranMerah.filter(
-                (oldPelanggaran) => oldPelanggaran !== pelanggaran
+export function updateFoulIndicator() {
+    if (redFouls.length > 0) {
+        redFouls.map((foul) => {
+            redFoulList = redFoulList.filter(
+                (oldFoul) => oldFoul !== foul
             );
         });
-        pelanggaranMerah.map((pelanggaran) => {
-            pureScoreRed -= pelanggaranPoint[pelanggaran];
+        redFoulList.map((foul) => {
+            pureScoreRed -= FOUL_POINTS[foul];
         });
-        pelanggaranMerah = redPelanggaran;
-        redPenalty = "pertama";
-        changeIndicatorPelanggaran("red", redPenalty);
+        redFoulList = redFouls;
+        redPenalty = "first";
+        changeFoulIndicator("red", redPenalty);
     } else {
-        pelanggaranMerah.map((pelanggaran) => {
-            pureScoreRed -= pelanggaranPoint[pelanggaran];
+        redFoulList.map((foul) => {
+            pureScoreRed -= FOUL_POINTS[foul];
         });
-        pelanggaranMerah = [];
-        console.log(
-            "🚀 ~ updateDataIndicator ~ pelanggaranMerah:",
-            pelanggaranMerah
-        );
-        redPenalty = "pertama";
-        changeIndicatorPelanggaran("red", redPenalty);
+        redFoulList = [];
+        redPenalty = "first";
+        changeFoulIndicator("red", redPenalty);
     }
 
-    if (bluePelanggaran.length > 0) {
-        console.log(
-            "🚀 ~ updateDataIndicator ~ bluePelanggaran.length:",
-            bluePelanggaran
-        );
-        bluePelanggaran.map((pelanggaran) => {
-            // pureScoreBlue -= pelanggaranPoint[pelanggaran]
-            pelanggaranBiru = pelanggaranBiru.filter(
-                (oldPelanggaran) => oldPelanggaran !== pelanggaran
+    if (blueFouls.length > 0) {
+        blueFouls.map((foul) => {
+            blueFoulList = blueFoulList.filter(
+                (oldFoul) => oldFoul !== foul
             );
         });
-        pelanggaranBiru.map((pelanggaran) => {
-            pureScoreBlue -= pelanggaranPoint[pelanggaran];
+        blueFoulList.map((foul) => {
+            pureScoreBlue -= FOUL_POINTS[foul];
         });
-        pelanggaranBiru = bluePelanggaran;
-        bluePenalty = "pertama";
-        changeIndicatorPelanggaran("blue", bluePenalty);
+        blueFoulList = blueFouls;
+        bluePenalty = "first";
+        changeFoulIndicator("blue", bluePenalty);
     } else {
-        pelanggaranBiru.map((pelanggaran) => {
-            pureScoreBlue -= pelanggaranPoint[pelanggaran];
+        blueFoulList.map((foul) => {
+            pureScoreBlue -= FOUL_POINTS[foul];
         });
-        pelanggaranBiru = [];
-        console.log(
-            "🚀 ~ updateDataIndicator ~ pelanggaranBiru:",
-            pelanggaranBiru
-        );
-        bluePenalty = "pertama";
-        changeIndicatorPelanggaran("blue", bluePenalty);
+        blueFoulList = [];
+        bluePenalty = "first";
+        changeFoulIndicator("blue", bluePenalty);
     }
 }
 
@@ -251,7 +227,7 @@ export function saveData() {
         pureScoreBlue: pureScoreBlue,
         actionStatus: actionStatus,
     };
-    rounds.map((round) => {
+    ROUNDS.map((round) => {
         data[round] = {
             blueInput: document.getElementById(`${round}-blueInput`)
                 .textContent,
@@ -261,15 +237,15 @@ export function saveData() {
                 .textContent,
         };
     });
-    localStorage.setItem("dataDewan", JSON.stringify(data));
+    localStorage.setItem("councilData", JSON.stringify(data));
 }
 export function loadDataSave() {
-    const data = JSON.parse(localStorage.getItem("dataDewan"));
+    const data = JSON.parse(localStorage.getItem("councilData"));
     bluePenalty = data.bluePenalty;
     redPenalty = data.redPenalty;
     pureScoreRed = data.pureScoreRed;
     pureScoreBlue = data.pureScoreBlue;
-    rounds.map((round) => {
+    ROUNDS.map((round) => {
         document.getElementById(`${round}-blueInput`).textContent =
             data[round].blueInput;
         document.getElementById(`${round}-redInput`).textContent =
@@ -280,23 +256,23 @@ export function loadDataSave() {
             data[round].blueScore;
     });
     enabledAction(true);
-    bluePenalty !== "pertama"
-        ? changeIndicatorPelanggaran("blue", bluePenalty)
+    bluePenalty !== "first"
+        ? changeFoulIndicator("blue", bluePenalty)
         : "";
-    redPenalty !== "pertama"
-        ? changeIndicatorPelanggaran("red", redPenalty)
+    redPenalty !== "first"
+        ? changeFoulIndicator("red", redPenalty)
         : "";
 }
 
-export function pushScore(droppingRed = 0, droppingBlue = 0) {
+export function pushScoreUpdate(droppingRed = 0, droppingBlue = 0) {
     pureScoreRed += droppingRed;
     pureScoreBlue += droppingBlue;
     axios.post("/score-update", {
         message: {
             blueScore: pureScoreBlue,
             redScore: pureScoreRed,
-            redPenalty: pelanggaranMerah,
-            bluePenalty: pelanggaranBiru,
+            redPenalty: redFoulList,
+            bluePenalty: blueFoulList,
             droppingRed: droppingRed,
             droppingBlue: droppingBlue,
         },
@@ -307,20 +283,20 @@ export function pushScore(droppingRed = 0, droppingBlue = 0) {
 export function handleScoreChange(color, scoreChange) {
     return function () {
         if (color === "red") {
-            let text = dataDewan.redInput.innerHTML;
+            let text = councilData.redInput.innerHTML;
             if (!isEmpty(text)) {
                 const values = text.split(",");
                 const formattedValues = values.map((value) => {
                     return value;
                 });
                 formattedValues.push(`${scoreChange}`);
-                dataDewan.redInput.innerHTML = formattedValues.join(",");
+                councilData.redInput.innerHTML = formattedValues.join(",");
             } else {
-                dataDewan.redInput.innerHTML = scoreChange;
+                councilData.redInput.innerHTML = scoreChange;
             }
-            pushScore(scoreChange, 0);
+            pushScoreUpdate(scoreChange, 0);
         } else if (color === "blue") {
-            let text = dataDewan.blueInput.innerHTML;
+            let text = councilData.blueInput.innerHTML;
             if (!isEmpty(text)) {
                 const values = text.split(",");
                 const formattedValues = values.map((value) => {
@@ -329,66 +305,66 @@ export function handleScoreChange(color, scoreChange) {
                 formattedValues.reverse();
                 formattedValues.push(`${scoreChange}`);
                 formattedValues.reverse();
-                dataDewan.blueInput.innerHTML = formattedValues.join(",");
+                councilData.blueInput.innerHTML = formattedValues.join(",");
             } else {
-                dataDewan.blueInput.innerHTML = scoreChange;
+                councilData.blueInput.innerHTML = scoreChange;
             }
-            pushScore(0, scoreChange);
+            pushScoreUpdate(0, scoreChange);
         }
     };
 }
 
-export function changeIndicatorPelanggaran(corner, penalty) {
-    let nameElemenet = pelanggaranRedElement;
-    let dataPelanggaran;
+export function changeFoulIndicator(corner, penalty) {
+    let nameElement = redFoulElements;
+    let dataFoul;
     let color = "bg-redDefault";
     if (corner !== "red") {
-        nameElemenet = pelanggaranBlueElement;
-        if (!pelanggaranBiru.includes(penalty)) {
-            pelanggaranBiru.push(penalty);
+        nameElement = blueFoulElements;
+        if (!blueFoulList.includes(penalty)) {
+            blueFoulList.push(penalty);
         } else {
-            pelanggaranBiru = pelanggaranBiru.filter(
+            blueFoulList = blueFoulList.filter(
                 (item) => item !== penalty
             );
         }
-        dataPelanggaran = pelanggaranBiru;
+        dataFoul = blueFoulList;
         color = "bg-blueDark";
     } else {
-        if (!pelanggaranMerah.includes(penalty)) {
-            pelanggaranMerah.push(penalty);
+        if (!redFoulList.includes(penalty)) {
+            redFoulList.push(penalty);
         } else {
-            pelanggaranMerah = pelanggaranMerah.filter(
+            redFoulList = redFoulList.filter(
                 (item) => item !== penalty
             );
         }
-        dataPelanggaran = pelanggaranMerah;
+        dataFoul = redFoulList;
     }
-    pelanggaranMerah.sort(compare);
-    pelanggaranBiru.sort(compare);
-    const pelanggaranMerahValue = pelanggaranMerah[pelanggaranMerah.length - 1];
-    const pelanggaranBiruValue = pelanggaranBiru[pelanggaranBiru.length - 1];
-    if (pelanggaran.indexOf(pelanggaranBiruValue) > 3) {
-        peringatanPenaltyBlue = true;
+    redFoulList.sort(compare);
+    blueFoulList.sort(compare);
+    const redFoulValue = redFoulList[redFoulList.length - 1];
+    const blueFoulValue = blueFoulList[blueFoulList.length - 1];
+    if (FOULS.indexOf(blueFoulValue) > 3) {
+        bluePenaltyWarning = true;
     }
-    if (pelanggaran.indexOf(pelanggaranMerahValue) > 3) {
-        peringatanPenaltyRed = true;
+    if (FOULS.indexOf(redFoulValue) > 3) {
+        redPenaltyWarning = true;
     }
-    redPenalty = pelanggaranMerahValue;
-    bluePenalty = pelanggaranBiruValue;
-    pelanggaran.map((itemPelanggaran) => {
-        if (dataPelanggaran.includes(itemPelanggaran)) {
-            nameElemenet[itemPelanggaran].classList.remove("bg-grayDefault");
-            nameElemenet[itemPelanggaran].classList.add(color);
+    redPenalty = redFoulValue;
+    bluePenalty = blueFoulValue;
+    FOULS.map((itemFoul) => {
+        if (dataFoul.includes(itemFoul)) {
+            nameElement[itemFoul].classList.remove("bg-grayDefault");
+            nameElement[itemFoul].classList.add(color);
         } else {
-            nameElemenet[itemPelanggaran].classList.add("bg-grayDefault");
-            nameElemenet[itemPelanggaran].classList.remove(color);
+            nameElement[itemFoul].classList.add("bg-grayDefault");
+            nameElement[itemFoul].classList.remove(color);
         }
     });
 }
 
 function compare(value1, value2) {
-    const index1 = pelanggaran.indexOf(value1);
-    const index2 = pelanggaran.indexOf(value2);
+    const index1 = FOULS.indexOf(value1);
+    const index2 = FOULS.indexOf(value2);
 
     if (index1 < index2) {
         return -1;
@@ -400,11 +376,11 @@ function compare(value1, value2) {
 }
 
 export function clearIndicator() {
-    const namesElement = [pelanggaranRedElement, pelanggaranBlueElement];
-    namesElement.map((nameElemenet) => {
-        pelanggaran.map((itemPelanggaran) => {
-            nameElemenet[itemPelanggaran].classList.add("bg-grayDefault");
-            nameElemenet[itemPelanggaran].classList.remove(
+    const namesElement = [redFoulElements, blueFoulElements];
+    namesElement.map((nameElement) => {
+        FOULS.map((itemFoul) => {
+            nameElement[itemFoul].classList.add("bg-grayDefault");
+            nameElement[itemFoul].classList.remove(
                 "bg-redDefault",
                 "bg-blueDark"
             );

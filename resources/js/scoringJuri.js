@@ -2,107 +2,97 @@ import { channelOperator, channelUpdateScore } from "./library/ScoreFunc";
 
 require("./bootstrap");
 import {
-    changeRoundJuri,
+    changeRoundJury,
     enabledAction,
     handleAction,
     inputPoint,
-    loadDataSaveJuri,
-    saveDataJuri,
+    loadDataSaveJury,
+    saveDataJury,
     startTimeout,
     updateDataScore,
-    updateRoundJuri,
+    updateRoundJury,
     updateScore,
-} from "./library/JuriFunc";
+} from "./library/JuryFunc";
 
 let userElement = document.getElementById("user");
 const userData = JSON.parse(userElement.getAttribute("data-user"));
 const header = document.getElementById("header");
-const visibleHeader = document.getElementById("visible-header");
+const toggleHeaderButton = document.getElementById("toggle-header-button");
 const firstLinePointGroup = document.getElementById("first-line-point-group");
-const pukulanBiru = document.getElementById("pukul-biru");
-const pukulanMerah = document.getElementById("pukul-merah");
-const tendanganBiru = document.getElementById("tendang-biru");
-const tendanganMerah = document.getElementById("tendang-merah");
-const channelGelanggang = Echo.join(`presence.juri.${userData.gelanggang_id}`);
+const bluePunch = document.getElementById("blue-punch");
+const redPunch = document.getElementById("red-punch");
+const blueKick = document.getElementById("blue-kick");
+const redKick = document.getElementById("red-kick");
+const arenaChannel = Echo.join(`presence.jury.${userData.arena_id}`);
 // localStorage.clear()\
 enabledAction(false);
 
-if (localStorage.getItem("dataJuriScoring")) {
-    console.log(JSON.parse(localStorage.getItem("dataJuriScoring")));
-    loadDataSaveJuri();
+if (localStorage.getItem("juryScoringData")) {
+    console.log(JSON.parse(localStorage.getItem("juryScoringData")));
+    loadDataSaveJury();
 }
-channelOperator.listen(`.operator.${userData.gelanggang_id}`, (event) => {
-    updateDataJuri(event);
+channelOperator.listen(`.operator.${userData.arena_id}`, (event) => {
+    updateJuryData(event);
 });
 
-channelUpdateScore.listen(`.updateScore.${userData.gelanggang_id}`, (event) => {
+channelUpdateScore.listen(`.updateScore.${userData.arena_id}`, (event) => {
     updateDataScore(event);
-    setTimeout(() => {
-        saveDataJuri();
-    }, 200);
+    saveDataJury();
 });
 
-channelGelanggang.listen(`.juri.${userData.gelanggang_id}`, (event) => {
+arenaChannel.listen(`.jury.${userData.arena_id}`, (event) => {
     updateScore(event);
 });
 
-visibleHeader.addEventListener("click", function () {
-    if (header.classList.contains("hidden")) {
-        visibleHeader.textContent = "Tutup";
-        header.classList.remove("hidden");
-        header.classList.add("flex");
-        firstLinePointGroup.classList.remove("mt-[0%]");
-        firstLinePointGroup.classList.add("mt-[5%]");
-    } else {
-        visibleHeader.textContent = "Lihat";
-        header.classList.add("hidden");
-        header.classList.remove("flex");
-        firstLinePointGroup.classList.remove("mt-[5%]");
-        firstLinePointGroup.classList.add("mt-[0%]");
-    }
+toggleHeaderButton.addEventListener("click", function () {
+    header.classList.toggle("hidden");
+    header.classList.toggle("flex");
+    firstLinePointGroup.classList.toggle("mt-[0%]");
+    firstLinePointGroup.classList.toggle("mt-[5%]");
+    toggleHeaderButton.textContent = header.classList.contains("hidden") ? "Show" : "Hide";
 });
 
-pukulanBiru.addEventListener("click", function (event) {
+bluePunch.addEventListener("click", function (event) {
     startTimeout(
         "blueInput",
-        "pukulanblue",
+        "blue-punch",
         inputPoint("blueInput", 1, "blue"),
         "blue"
     );
-    handleAction(event, "blue", "pukulan");
+    handleAction(event, "blue", "punch");
 });
 
-pukulanMerah.addEventListener("click", function (event) {
-    startTimeout("redInput", "pukulanred", inputPoint("redInput", 1));
-    handleAction(event, "red", "pukulan");
+redPunch.addEventListener("click", function (event) {
+    startTimeout("redInput", "red-punch", inputPoint("redInput", 1));
+    handleAction(event, "red", "punch");
 });
 
-tendanganMerah.addEventListener("click", function (event) {
-    startTimeout("redInput", "tendanganred", inputPoint("redInput", 2));
-    handleAction(event, "red", "tendangan");
+redKick.addEventListener("click", function (event) {
+    startTimeout("redInput", "red-kick", inputPoint("redInput", 2));
+    handleAction(event, "red", "kick");
 });
 
-tendanganBiru.addEventListener("click", function (event) {
+blueKick.addEventListener("click", function (event) {
     startTimeout(
         "blueInput",
-        "tendanganblue",
+        "blue-kick",
         inputPoint("blueInput", 2, "blue"),
         "blue"
     );
-    handleAction(event, "blue", "tendangan");
+    handleAction(event, "blue", "kick");
 });
 
-function updateDataJuri(e) {
+function updateJuryData(e) {
     switch (e.action) {
         case "start":
-            updateRoundJuri(e.activeRound);
+            updateRoundJury(e.activeRound);
             break;
         case "finish":
             break;
         case "round":
             enabledAction(false);
-            changeRoundJuri(e.activeRound);
-            updateRoundJuri(e.activeRound);
+            changeRoundJury(e.activeRound);
+            updateRoundJury(e.activeRound);
             break;
         case "pause":
             enabledAction(false);

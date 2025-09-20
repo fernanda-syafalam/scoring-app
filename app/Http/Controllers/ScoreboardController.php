@@ -5,17 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\UserGelanggang;
 use Illuminate\Http\Request;
 
-class KetuaPertandingaController extends Controller
+class ScoreboardController extends Controller
 {
     public function index()
     {
         if (env("MANAGEMENT_ROLE")){
-            $this->authorize("ketua");
+            $this->authorize("guest");
         }
         $gelangang = UserGelanggang::where('user_id', auth()->user()->id)->first();
-        return view('ketuaPertandingan', [
-            'title' => 'ketua pertandingan',
-            'gelanggang' => $gelangang,
+        return view('scoreboard', [
+            'title' => 'Scoreboard',
+            'gelangang'=>$gelangang
         ]);
     }
 }

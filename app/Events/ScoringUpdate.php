@@ -2,8 +2,7 @@
 
 namespace App\Events;
 
-use App\Models\User;
-use App\Models\UserGelanggang;
+use App\Models\UserArena;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -22,14 +21,14 @@ class ScoringUpdate implements ShouldBroadcast
     public function __construct( $message)
     {
         $user = auth()->user();
-        $gelanggang = $this->getGelanggangId($user);
+        $arena = $this->getArenaId($user);
         $this->blueScore = $message['blueScore'];
         $this->redScore = $message['redScore'];
         $this->redPenalty = $message['redPenalty'];
         $this->bluePenalty = $message['bluePenalty'];
         $this->droppingRed = $message['droppingRed'];
         $this->droppingBlue = $message['droppingBlue'];
-        $this->roomId = $gelanggang;
+        $this->roomId = $arena;
     }
     public function broadcastOn(): PresenceChannel
     {
@@ -51,9 +50,9 @@ class ScoringUpdate implements ShouldBroadcast
             'droppingBlue'=>$this->droppingBlue,
         ];
     }
-    private function getGelanggangId($user)
+    private function getArenaId($user)
     {
-        $gelanggang = UserGelanggang::where('user_id', $user->id)->first();
-        return $gelanggang->gelanggang_id;
+        $arena = UserArena::where('user_id', $user->id)->first();
+        return $arena->arena_id;
     }
 }

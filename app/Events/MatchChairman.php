@@ -11,10 +11,10 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class KetuaPertandingan implements ShouldBroadcast
+class MatchChairman implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-    private string $sudut, $scorePiece;
+    private string $corner, $scorePiece;
     private int $roomId, $id;
     // private array $;
     /**
@@ -25,10 +25,10 @@ class KetuaPertandingan implements ShouldBroadcast
     public function __construct($message)
     {
         $user = auth()->user();
-        $gelanggang = $this->getGelanggangId($user);
-        $this->roomId = $gelanggang;
+        $arena = $this->getArenaId($user);
+        $this->roomId = $arena;
         $this->id = $user['role_id'];
-        $this->sudut = $message['sudut'];
+        $this->corner = $message['corner'];
         $this->scorePiece = $message['scorePiece'];
     }
 
@@ -39,18 +39,18 @@ class KetuaPertandingan implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        return new PresenceChannel('presence.ketuaPertandingan.'.$this->roomId);
+        return new PresenceChannel('presence.match-chairman.'.$this->roomId);
     }
 
     public function broadcastAs(): string
     {
-        return 'ketuaPertandingan.'.$this->roomId;
+        return 'match-chairman.'.$this->roomId;
     }
 
     public function broadcastWith()
     {
         return [
-            'sudut'=>$this->sudut,
+            'corner'=>$this->corner,
             'scorePiece'=>$this->scorePiece,
             'id'=> $this->getRoleById($this->id)
         ];
@@ -58,18 +58,18 @@ class KetuaPertandingan implements ShouldBroadcast
     private function getRoleById($id): string
     {
         $roleMap = [
-            5 => 'Juri Pertama',
-            6 => 'Juri Kedua',
-            7 => 'Juri Ketiga',
+            5 => 'Jury 1',
+            6 => 'Jury 2',
+            7 => 'Jury 3',
         ];
 
-        return $roleMap[$id] ?? 'Role Lainnya';
+        return $roleMap[$id] ?? 'Other Role';
     }
 
-    private function getGelanggangId($user)
+    private function getArenaId($user)
     {
-        $gelanggang = UserGelanggang::where('user_id', $user->id)->first();
-        return $gelanggang->gelanggang_id;
+        $arena = UserArena::where('user_id', $user->id)->first();
+        return $arena->arena_id;
     }
 
 }

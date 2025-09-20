@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Partai;
-use App\Models\Pertandingan;
+use App\Models\Match;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -20,16 +19,16 @@ class Admin extends Controller
     {
 
         return view('admin.users.users', [
-           'title' => 'list user',
+           'title' => 'List Users',
             'data' => User::paginate(10)
         ]);
     }
 
-    public function getRooms()
+    public function getMatches()
     {
-        return view('admin.rooms',[
-            'title' => 'list rooms',
-            'data' => collect(Pertandingan::paginate(5))->all()
+        return view('admin.matches',[
+            'title' => 'List Matches',
+            'data' => collect(Match::paginate(5))->all()
         ]);
     }
 }

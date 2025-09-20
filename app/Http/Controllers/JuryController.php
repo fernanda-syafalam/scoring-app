@@ -5,16 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\UserGelanggang;
 use Illuminate\Http\Request;
 
-class JuriController extends Controller
+class JuryController extends Controller
 {
     public function index()
     {
         if (env("MANAGEMENT_ROLE")){
-            $this->authorize("juri");
+            $this->authorize("jury");
         }
         $gelangang = UserGelanggang::where('user_id', auth()->user()->id)->first();
-        return view('juri', [
-            'title' => 'juri',
+        return view('jury', [
+            'title' => 'jury',
             'gelanggang'=>$gelangang
         ]);
     }

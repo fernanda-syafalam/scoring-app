@@ -11,7 +11,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class IndicatorPelanggaran implements ShouldBroadcast
+class FoulIndicator implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
     private string $color, $penalty;
@@ -25,8 +25,8 @@ class IndicatorPelanggaran implements ShouldBroadcast
     public function __construct($message)
     {
         $user = auth()->user();
-        $gelanggang = $this->getGelanggangId($user);
-        $this->roomId = $gelanggang;
+        $arena = $this->getArenaId($user);
+        $this->roomId = $arena;
         $this->color = $message['color'];
         $this->penalty = $message['penalty'];
     }
@@ -54,20 +54,9 @@ class IndicatorPelanggaran implements ShouldBroadcast
         ];
     }
 
-    private function getRoleById($id): string
+    private function getArenaId($user)
     {
-        $roleMap = [
-            5 => 'Juri Pertama',
-            6 => 'Juri Kedua',
-            7 => 'Juri Ketiga',
-        ];
-
-        return $roleMap[$id] ?? 'Role Lainnya';
-    }
-
-    private function getGelanggangId($user)
-    {
-        $gelanggang = UserGelanggang::where('user_id', $user->id)->first();
-        return $gelanggang->gelanggang_id;
+        $arena = UserArena::where('user_id', $user->id)->first();
+        return $arena->arena_id;
     }
 }

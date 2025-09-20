@@ -1,60 +1,65 @@
 import { isEmpty } from "lodash";
-const rounds = ["round-1", "round-2", "round-3"];
+
+// Constants for round names and button actions
+const ROUNDS = ["round-1", "round-2", "round-3"];
+const BUTTON_ACTIONS = [
+    "blue-punch",
+    "blue-kick",
+    "red-punch",
+    "red-kick",
+];
+
+// State variables
 let pureScoreRed = 0;
 let pureScoreBlue = 0;
-let bluePenalty = ["pertama"];
-const buttonAction = [
-    "pukul-biru",
-    "tendang-biru",
-    "pukul-merah",
-    "tendang-merah",
-];
-let redPenalty = ["pertama"];
-let roundGelanggang =
+let bluePenalty = ["first"];
+let redPenalty = ["first"];
+let activeRound =
     JSON.parse(
-        localStorage.getItem("gelanggangData")
+        localStorage.getItem("arenaData")
     )?.activeRound?.toLowerCase() || "ROUND";
-const dataJuri = {
+let actionStatus = false;
+
+// DOM element references
+const juryData = {
     blueScore: document.getElementById(`round-1-blueScore`),
     redScore: document.getElementById(`round-1-redScore`),
     blueInput: document.getElementById(`round-1-blueInput`),
     redInput: document.getElementById(`round-1-redInput`),
 };
-let actionStatus = false;
-export function updateRoundJuri(round) {
-    dataJuri.blueScore = document.getElementById(`${round}-blueScore`);
-    dataJuri.redScore = document.getElementById(`${round}-redScore`);
-    dataJuri.blueInput = document.getElementById(`${round}-blueInput`);
-    dataJuri.redInput = document.getElementById(`${round}-redInput`);
-    roundGelanggang = round;
+
+// Timeout references
+export const timeouts = {};
+
+/**
+ * Updates the DOM element references for the current round.
+ * @param {string} round - The current round.
+ */
+export function updateRoundJury(round) {
+    juryData.blueScore = document.getElementById(`${round}-blueScore`);
+    juryData.redScore = document.getElementById(`${round}-redScore`);
+    juryData.blueInput = document.getElementById(`${round}-blueInput`);
+    juryData.redInput = document.getElementById(`${round}-redInput`);
+    activeRound = round;
 }
 
-export const timeouts = {
-    pukulanred: [],
-    pukulanblue: [],
-    tendanganblue: [],
-    tendanganred: [],
-    juripertamapukulanred: [],
-    jurikeduapukulanred: [],
-    juriketigapukulanred: [],
-    juripertamapukulanblue: [],
-    jurikeduapukulanblue: [],
-    juriketigapukulanblue: [],
-    juripertamatendanganred: [],
-    jurikeduatendanganred: [],
-    juriketigatendanganred: [],
-    juripertamatendanganblue: [],
-    jurikeduatendanganblue: [],
-    juriketigatendanganblue: [],
-};
-
+/**
+ * Converts an ID string to a CSS-friendly format.
+ * @param {string} id - The ID string.
+ * @returns {string} The formatted ID.
+ */
 export function getId(id) {
     return id.toLowerCase().replace(/ /g, "-");
 }
-export function indicatorUpdate(id, sudut) {
-    console.log(id);
+
+/**
+ * Toggles the indicator for a given element.
+ * @param {string} id - The ID of the indicator element.
+ * @param {string} corner - The corner color ("blue" or "red").
+ */
+export function indicatorUpdate(id, corner) {
     const indicator = document.getElementById(id);
-    if (sudut === "blue") {
+    if (corner === "blue") {
         indicator.classList.toggle("bg-blueDefault");
         indicator.classList.toggle("bg-grayDefault");
     } else {
@@ -63,26 +68,49 @@ export function indicatorUpdate(id, sudut) {
     }
 }
 
-export function startTimeoutIndicator(element, sudut) {
+/**
+ * Starts a timeout to toggle an indicator.
+ * @param {string} element - The ID of the indicator element.
+ * @param {string} corner - The corner color.
+ */
+export function startTimeoutIndicator(element, corner) {
     let name = element.replace(/-/g, "");
     timeouts[`${name}`] = setTimeout(() => {
-        indicatorUpdate(element, sudut);
+        indicatorUpdate(element, corner);
     }, 2000);
 }
 
-export function startTimeout(element, params, posisi, sudut = "red") {
+/**
+ * Starts a timeout to strike out a value.
+ * @param {string} element - The DOM element to update.
+ * @param {string} params - The timeout key.
+ * @param {number} position - The position of the value to strike out.
+ * @param {string} corner - The corner color.
+ */
+export function startTimeout(element, params, position, corner = "red") {
     timeouts[`${params}`] = setTimeout(() => {
-        strikeoutLastValue(element, posisi, sudut);
+        strikeoutLastValue(element, position, corner);
     }, 2000);
 }
 
+/**
+ * Cancels a timeout.
+ * @param {string} params - The timeout key.
+ */
 export function cancelTimeout(params) {
     params = params.toLowerCase();
     clearTimeout(timeouts[`${params}`]);
 }
 
-export function inputPoint(element, point, sudut = "red") {
-    element = dataJuri[`${element}`];
+/**
+ * Inputs a point value into the DOM.
+ * @param {string} element - The DOM element to update.
+ * @param {number} point - The point value.
+ * @param {string} corner - The corner color.
+ * @returns {number} The new number of values.
+ */
+export function inputPoint(element, point, corner = "red") {
+    element = juryData[`${element}`];
     const text = element.innerHTML;
     const values = text.split(",");
     if (!isEmpty(text)) {
@@ -93,7 +121,7 @@ export function inputPoint(element, point, sudut = "red") {
                 return value;
             }
         });
-        if (sudut === "blue") {
+        if (corner === "blue") {
             formattedValues.reverse();
             formattedValues.push(`${point}`);
             formattedValues.reverse();
@@ -103,31 +131,42 @@ export function inputPoint(element, point, sudut = "red") {
         const joinValues = formattedValues.join(",");
         element.innerHTML = joinValues;
         const scorePiece = joinValues;
-        pushKetuaPertandingan(sudut, scorePiece);
-        saveDataJuri();
+        pushMatchChairmanUpdate(corner, scorePiece);
+        saveJuryData();
         return values.length;
     } else {
         element.innerHTML = point;
-        pushKetuaPertandingan(sudut, point);
-        saveDataJuri();
+        pushMatchChairmanUpdate(corner, point);
+        saveJuryData();
     }
 }
 
-export function changeRoundJuri(roundActive) {
-    roundGelanggang = roundActive;
+/**
+ * Changes the active round.
+ * @param {string} roundActive - The new active round.
+ */
+export function changeRoundJury(roundActive) {
+    activeRound = roundActive;
 }
-function strikeoutLastValue(element, posisi, sudut) {
-    element = dataJuri[`${element}`];
+
+/**
+ * Strikes out the last value in a comma-separated list.
+ * @param {string} element - The DOM element to update.
+ * @param {number} position - The position of the value to strike out.
+ * @param {string} corner - The corner color.
+ */
+function strikeoutLastValue(element, position, corner) {
+    element = juryData[`${element}`];
     const text = element.innerHTML;
 
     if (text !== "") {
         let values = text.split(",");
-        if (sudut === "blue") {
+        if (corner === "blue") {
             values = values.reverse();
         }
-        const valuePosisi = values.splice(posisi, 1)[0];
-        values.splice(posisi, 0, `<s>${valuePosisi.trim()}</s>`);
-        if (sudut === "blue") {
+        const valuePosition = values.splice(position, 1)[0];
+        values.splice(position, 0, `<s>${valuePosition.trim()}</s>`);
+        if (corner === "blue") {
             values = values.reverse();
         }
         const formattedValues = values.map((value) => {
@@ -139,22 +178,35 @@ function strikeoutLastValue(element, posisi, sudut) {
         });
         const scorePiece = formattedValues.join(",");
         element.innerHTML = scorePiece;
-        pushKetuaPertandingan(sudut, scorePiece);
-        saveDataJuri();
+        pushMatchChairmanUpdate(corner, scorePiece);
+        saveJuryData();
     }
-    saveDataJuri();
+    saveJuryData();
 }
 
+/**
+ * Handles a scoring action.
+ * @param {Event} event - The click event.
+ * @param {string} color - The corner color.
+ * @param {string} action - The action type.
+ */
 export function handleAction(event, color, action) {
     event.preventDefault();
-    pushMessage(color, action);
+    pushScoreEvent(color, action);
 }
 
-function pushMessage(sudut, gerakan, blueScore = 0, redScore = 0) {
+/**
+ * Pushes a score event to the server.
+ * @param {string} corner - The corner color.
+ * @param {string} movement - The movement type.
+ * @param {number} blueScore - The blue score.
+ * @param {number} redScore - The red score.
+ */
+function pushScoreEvent(corner, movement, blueScore = 0, redScore = 0) {
     axios.post("/score-event", {
         message: {
-            gerakan: gerakan,
-            sudut: sudut,
+            movement: movement,
+            corner: corner,
             blueScore: blueScore,
             redScore: redScore,
             time: Date.now(),
@@ -162,16 +214,24 @@ function pushMessage(sudut, gerakan, blueScore = 0, redScore = 0) {
     });
 }
 
-function pushKetuaPertandingan(sudut, scorePiece) {
-    axios.post("/ketua-pertandingan-update", {
+/**
+ * Pushes a match chairman update to the server.
+ * @param {string} corner - The corner color.
+ * @param {string} scorePiece - The score piece.
+ */
+function pushMatchChairmanUpdate(corner, scorePiece) {
+    axios.post("/match-chairman-update", {
         message: {
-            sudut: sudut,
+            corner: corner,
             scorePiece: scorePiece,
         },
     });
 }
 
-export function saveDataJuri() {
+/**
+ * Saves the jury's scoring data to local storage.
+ */
+export function saveJuryData() {
     const data = {
         bluePenalty: bluePenalty,
         redPenalty: redPenalty,
@@ -179,7 +239,7 @@ export function saveDataJuri() {
         pureScoreBlue: pureScoreBlue,
         actionStatus: actionStatus,
     };
-    rounds.map((round) => {
+    ROUNDS.map((round) => {
         data[round] = {
             blueInput: document.getElementById(`${round}-blueInput`).innerHTML,
             redInput: document.getElementById(`${round}-redInput`).innerHTML,
@@ -188,17 +248,20 @@ export function saveDataJuri() {
                 .textContent,
         };
     });
-    localStorage.setItem("dataJuriScoring", JSON.stringify(data));
+    localStorage.setItem("juryScoringData", JSON.stringify(data));
 }
 
-export function loadDataSaveJuri() {
-    const data = JSON.parse(localStorage.getItem("dataJuriScoring"));
+/**
+ * Loads the jury's scoring data from local storage.
+ */
+export function loadDataSaveJury() {
+    const data = JSON.parse(localStorage.getItem("juryScoringData"));
     bluePenalty = data.bluePenalty;
     redPenalty = data.redPenalty;
     pureScoreRed = data.pureScoreRed;
     pureScoreBlue = data.pureScoreBlue;
     console.log(data);
-    rounds.map((round) => {
+    ROUNDS.map((round) => {
         document.getElementById(`${round}-blueInput`).innerHTML =
             data[round].blueInput;
         document.getElementById(`${round}-redInput`).innerHTML =
@@ -210,6 +273,10 @@ export function loadDataSaveJuri() {
     });
 }
 
+/**
+ * Updates the score data from a WebSocket event.
+ * @param {Object} event - The WebSocket event.
+ */
 export function updateDataScore(event) {
     pureScoreRed = event.red_score;
     pureScoreBlue = event.blue_score;
@@ -217,48 +284,55 @@ export function updateDataScore(event) {
     bluePenalty = event.blue_penalty;
 }
 
+/**
+ * Updates the score based on a WebSocket event.
+ * @param {Object} event - The WebSocket event.
+ */
 export function updateScore(event) {
     console.log(event);
-    const gerakan = event.gerakan;
-    const sudut = event.sudut;
+    const movement = event.movement;
+    const corner = event.corner;
     const id = event.id;
-    const name = sudut + gerakan;
-    const sudutPointTime = name + "time";
+    const name = corner + movement;
+    const cornerPointTime = name + "time";
     const exp = event.expired;
     const score = {
         redScore: 0,
         blueScore: 0,
     };
-    const sudutScore = event.sudut + "Score";
-    const elementName = getId(id + " " + gerakan + " " + sudut);
-    indicatorUpdate(elementName, sudut);
-    startTimeoutIndicator(elementName, sudut);
-    if (localStorage.getItem(sudutPointTime) && localStorage.getItem(name)) {
-        const time = localStorage.getItem(sudutPointTime);
+    const cornerScore = event.corner + "Score";
+    const elementName = getId(id + " " + movement + " " + corner);
+    indicatorUpdate(elementName, corner);
+    startTimeoutIndicator(elementName, corner);
+    if (localStorage.getItem(cornerPointTime) && localStorage.getItem(name)) {
+        const time = localStorage.getItem(cornerPointTime);
         if (exp - time <= 2000 && localStorage.getItem(name) !== id) {
-            if (gerakan === "tendangan") {
-                score[`${sudutScore}`] += 2;
+            if (movement === "kick") {
+                score[`${cornerScore}`] += 2;
             } else {
-                score[`${sudutScore}`] += 1;
+                score[`${cornerScore}`] += 1;
             }
-            localStorage.removeItem(sudutPointTime);
+            localStorage.removeItem(cornerPointTime);
             localStorage.removeItem(name);
-            cancelTimeout(gerakan + sudut);
+            cancelTimeout(movement + corner);
             pureScoreRed += score["redScore"];
             pureScoreBlue += score["blueScore"];
-            pushScore();
+            pushScoreUpdate();
             return score;
         }
-        localStorage.removeItem(sudutPointTime);
+        localStorage.removeItem(cornerPointTime);
         localStorage.removeItem(name);
     }
-    localStorage.setItem(sudutPointTime, exp);
+    localStorage.setItem(cornerPointTime, exp);
     localStorage.setItem(name, id);
     return score;
 }
 
-function pushScore() {
-    saveDataJuri();
+/**
+ * Pushes a score update to the server.
+ */
+function pushScoreUpdate() {
+    saveJuryData();
     axios.post("/score-update", {
         message: {
             redPenalty: redPenalty,
@@ -271,9 +345,13 @@ function pushScore() {
     });
 }
 
+/**
+ * Enables or disables the scoring action buttons.
+ * @param {boolean} status - The status of the buttons.
+ */
 export function enabledAction(status = true) {
     actionStatus = status;
-    buttonAction.map((action) => {
+    BUTTON_ACTIONS.map((action) => {
         const button = document.getElementById(action);
         button.disabled = !status;
     });

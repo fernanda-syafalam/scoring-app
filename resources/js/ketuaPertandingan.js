@@ -2,30 +2,30 @@
 
 require("./bootstrap");
 import {
-    channelKetuaPertandingan,
-    storeGelanggangData,
-    startPertandingan,
+    matchChairmanChannel,
+    storeArenaData,
+    startMatch,
     loadDataSaved,
     changeRound,
-    storeJurror,
+    storeJuror,
     storePoint,
     storeDroppingRed,
     storeDroppingBlue,
     storeRedPenalty,
     storeBluePenalty,
-} from "./library/KetuaFunc.js";
+} from "./library/ChairmanFunc.js";
 import {
     channelUpdateScore,
     channelOperator,
     updateScore,
     userData,
-    savedGelanggangData,
+    savedArenaData,
 } from "./library/ScoreFunc.js";
 
-storeGelanggangData(savedGelanggangData);
+storeArenaData(savedArenaData);
 loadDataSaved();
 
-channelUpdateScore.listen(`.updateScore.${userData.gelanggang_id}`, (event) => {
+channelUpdateScore.listen(`.updateScore.${userData.arena_id}`, (event) => {
     updateScore(event);
     storePoint();
     storeDroppingRed(event.droppingRed);
@@ -34,14 +34,14 @@ channelUpdateScore.listen(`.updateScore.${userData.gelanggang_id}`, (event) => {
     storeBluePenalty(event.blue_penalty);
 });
 
-channelOperator.listen(`.operator.${userData.gelanggang_id}`, (event) => {
-    updateDataGelanggang(event);
+channelOperator.listen(`.operator.${userData.arena_id}`, (event) => {
+    updateArenaData(event);
 });
 
-channelKetuaPertandingan.listen(
-    `.ketuaPertandingan.${userData.gelanggang_id}`,
+matchChairmanChannel.listen(
+    `.match-chairman.${userData.arena_id}`,
     (event) => {
-        storeJurror(event.id, event.scorePiece, event.sudut);
+        storeJuror(event.id, event.scorePiece, event.corner);
     }
 );
 
@@ -49,10 +49,10 @@ function screenShot() {
     axios.get("/capture-screenshot");
 }
 
-function updateDataGelanggang(e) {
+function updateArenaData(e) {
     switch (e.action) {
         case "start":
-            startPertandingan(e);
+            startMatch(e);
             break;
         case "finish":
             screenShot();

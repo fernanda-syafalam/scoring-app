@@ -1,12 +1,12 @@
 import {
-    changeIndicatorPelanggaran,
+    changeFoulIndicator,
     clearIndicator,
-    updateDataIndicator,
-} from "./library/DewanFunc";
+    updateFoulIndicator,
+} from "./library/CouncilFunc";
 
 require("./bootstrap");
 import {
-    startPertandingan,
+    startMatch,
     loadDataSaved,
     updateScore,
     activeRound,
@@ -14,19 +14,19 @@ import {
     channelUpdateScore,
     channelOperator,
     userData,
-    getDataGelanggang,
+    getArenaData,
     channelPenalty,
 } from "./library/ScoreFunc";
 import {
     getId,
     indicatorUpdate,
     startTimeoutIndicator,
-} from "./library/JuriFunc";
+} from "./library/JuryFunc";
 
 let blueScore = document.getElementById(`blueScore`);
 let redScore = document.getElementById(`redScore`);
 const timerDisplay = document.getElementById("timer");
-const channelGelanggang = Echo.join(`presence.juri.${userData.gelanggang_id}`);
+const arenaChannel = Echo.join(`presence.jury.${userData.arena_id}`);
 let timerStarted = false;
 let timePerRound = 120;
 let countdown;
@@ -40,20 +40,19 @@ if (localStorage.getItem("timerStarted")) {
     loadSaveTimer();
 }
 
-channelGelanggang.listen(`.juri.${userData.gelanggang_id}`, (event) => {
-    updateindicator(event);
+arenaChannel.listen(`.jury.${userData.arena_id}`, (event) => {
+    updateIndicator(event);
 });
-channelPenalty.listen(`.penalty.${userData.gelanggang_id}`, (event) => {
-    changeIndicatorPelanggaran(event.color, event.penalty);
+channelPenalty.listen(`.penalty.${userData.arena_id}`, (event) => {
+    changeFoulIndicator(event.color, event.penalty);
 });
 
-channelUpdateScore.listen(`.updateScore.${userData.gelanggang_id}`, (event) => {
+channelUpdateScore.listen(`.updateScore.${userData.arena_id}`, (event) => {
     updateScore(event);
 });
 
-channelOperator.listen(`.operator.${userData.gelanggang_id}`, (event) => {
-    console.log(event);
-    updateDataGelanggang(event);
+channelOperator.listen(`.operator.${userData.arena_id}`, (event) => {
+    updateArenaData(event);
 });
 
 function updateTimer(action) {
@@ -83,7 +82,6 @@ function saveTimerState() {
     localStorage.setItem("timerSecondsRemaining", secondsRemaining);
     localStorage.setItem("timerEndTime", endTime);
 }
-F;
 
 function loadSaveTimer() {
     timerStarted = localStorage.getItem("timerStarted");
@@ -106,7 +104,6 @@ function displayTimeLeft(seconds) {
 
 function clearTimerState() {
     timerStarted = false;
-    // updatePertandingan();
     localStorage.removeItem("timerIsPaused");
     localStorage.removeItem("timerSecondsRemaining");
     localStorage.removeItem("timerEndTime");
@@ -135,8 +132,6 @@ function startTimer(seconds) {
                 clearTimerState();
                 timerDisplay.textContent = "00:00";
             }
-            // console.log('done')
-            // clearTimerState();
             return;
         }
 
@@ -146,13 +141,14 @@ function startTimer(seconds) {
     }, 1000);
 }
 
-function updateDataGelanggang(e) {
+function updateArenaData(e) {
     switch (e.action) {
         case "start":
             timePerRound = e.time;
-            startPertandingan(e);
+            startMatch(e);
             break;
-        case "reset" || "finish":
+        case "reset":
+        case "finish":
             localStorage.clear();
             location.reload();
             break;
@@ -169,17 +165,17 @@ function updateDataGelanggang(e) {
     }
 }
 
-function updateindicator(event) {
-    const gerakan = event.gerakan;
-    const sudut = event.sudut;
+function updateIndicator(event) {
+    const movement = event.movement;
+    const corner = event.corner;
     const id = event.id;
-    const elementName = getId(id + " " + gerakan + " " + sudut);
-    indicatorUpdate(elementName, sudut);
-    startTimeoutIndicator(elementName, sudut);
+    const elementName = getId(id + " " + movement + " " + corner);
+    indicatorUpdate(elementName, corner);
+    startTimeoutIndicator(elementName, corner);
 }
 
 function changeRound(e) {
-    updateDataIndicator();
+    updateFoulIndicator();
     activeRound.textContent = e.activeRound.toUpperCase();
     round = e.activeRound;
 }

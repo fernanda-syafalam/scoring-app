@@ -2,9 +2,7 @@
 
 namespace App\Events;
 
-use App\Models\Gelanggang;
-use App\Models\User;
-use App\Models\UserGelanggang;
+use App\Models\UserArena;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -15,7 +13,7 @@ class Scoring implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
     private bool $done = false;
-    private string $sudut, $gerakan, $name;
+    private string $corner, $movement, $name;
     private int $blueScore, $redScore, $roomId, $id,$time;
     /**
      * Create a new event instance.
@@ -25,11 +23,11 @@ class Scoring implements ShouldBroadcast
     public function __construct($message)
     {
         $user = auth()->user();
-        $gelanggang = $this->getGelanggangId($user);
-        $this->roomId = $gelanggang;
+        $arena = $this->getArenaId($user);
+        $this->roomId = $arena;
         $this->id = $user['role_id'];
-        $this->sudut = $message['sudut'];
-        $this->gerakan = $message['gerakan'];
+        $this->corner = $message['corner'];
+        $this->movement = $message['movement'];
         $this->blueScore = $message['blueScore'];
         $this->redScore = $message['redScore'];
         $this->time = $message['time'];
@@ -42,12 +40,12 @@ class Scoring implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        return new PresenceChannel('presence.juri.'.$this->roomId);
+        return new PresenceChannel('presence.jury.'.$this->roomId);
     }
 
     public function broadcastAs(): string
     {
-        return 'juri.'.$this->roomId;
+        return 'jury.'.$this->roomId;
     }
 
     public function broadcastWith()
@@ -56,26 +54,26 @@ class Scoring implements ShouldBroadcast
             'blue_score'=>$this->blueScore,
             'red_score'=>$this->redScore,
             'expired'=>$this->time,
-            'sudut'=>$this->sudut,
-            'gerakan'=>$this->gerakan,
+            'corner'=>$this->corner,
+            'movement'=>$this->movement,
             'id'=> $this->getRoleById($this->id)
         ];
     }
     private function getRoleById($id): string
     {
         $roleMap = [
-            5 => 'Juri Pertama',
-            6 => 'Juri Kedua',
-            7 => 'Juri Ketiga',
+            5 => 'Jury 1',
+            6 => 'Jury 2',
+            7 => 'Jury 3',
         ];
 
-        return $roleMap[$id] ?? 'Role Lainnya';
+        return $roleMap[$id] ?? 'Other Role';
     }
 
-    private function getGelanggangId($user)
+    private function getArenaId($user)
     {
-        $gelanggang = UserGelanggang::where('user_id', $user->id)->first();
-        return $gelanggang->gelanggang_id;
+        $arena = UserArena::where('user_id', $user->id)->first();
+        return $arena->arena_id;
     }
 
 }

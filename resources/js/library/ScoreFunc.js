@@ -1,52 +1,52 @@
-const namaMerah = document.getElementById("nama_merah");
-const kontingenMerah = document.getElementById("kontingen_merah");
-const namaBiru = document.getElementById("nama_biru");
-const kontingenBiru = document.getElementById("kontingen_biru");
-const babak = document.getElementById("babak");
+const redName = document.getElementById("red-name");
+const redContingent = document.getElementById("red-contingent");
+const blueName = document.getElementById("blue-name");
+const blueContingent = document.getElementById("blue-contingent");
+const matchRound = document.getElementById("match-round");
 let pureScoreRed = 0;
 let pureScoreBlue = 0;
-export let partaiId = "";
+export let matchId = "";
 
-export let kelas;
+export let matchClass;
 let redScore = "";
 let blueScore = "";
 let userElement = document.getElementById("user");
 export const userData = JSON.parse(userElement.getAttribute("data-user"));
 export const channelUpdateScore = Echo.join(
-    `presence.updateScore.${userData.gelanggang_id}`
+    `presence.updateScore.${userData.arena_id}`
 );
 export const channelPenalty = Echo.join(
-    `presence.penalty.${userData.gelanggang_id}`
+    `presence.penalty.${userData.arena_id}`
 );
 export const channelOperator = Echo.join(
-    `presence.operator.${userData.gelanggang_id}`
+    `presence.operator.${userData.arena_id}`
 );
 export const activeRound = document.getElementById("round");
-const pelanggaranPoint = {
-    pertama: 0,
-    "binaan-pertama": 0,
-    "binaan-kedua": 0,
-    "teguran-pertama": 1,
-    "teguran-kedua": 2,
-    "peringatan-pertama": 5,
-    "peringatan-kedua": 10,
-    "peringatan-ketiga": 0,
+const FOUL_POINTS = {
+    first: 0,
+    "first-coaching": 0,
+    "second-coaching": 0,
+    "first-warning": 1,
+    "second-warning": 2,
+    "first-penalty": 5,
+    "second-penalty": 10,
+    "third-penalty": 0,
 };
-export const savedGelanggangData = JSON.parse(
-    localStorage.getItem("gelanggangData")
+export const savedArenaData = JSON.parse(
+    localStorage.getItem("arenaData")
 ) || {
-    namaMerah: "Sudut Merah",
-    kontingenMerah: "Kontingen",
-    namaBiru: "Sudut Biru",
-    kontingenBiru: "kontingen",
-    babak: "BABAK",
+    redName: "Red Corner",
+    redContingent: "Contingent",
+    blueName: "Blue Corner",
+    blueContingent: "Contingent",
+    round: "ROUND",
     activeRound: "ROUND",
 };
 const savedScoreData = JSON.parse(localStorage.getItem("scoreData")) || {
     redScore: 0,
     blueScore: 0,
-    bluePenalty: "teguran-pertama",
-    redPenalty: "teguran-pertama",
+    bluePenalty: "first-warning",
+    redPenalty: "first-warning",
 };
 export let redPenalty = "";
 export let bluePenalty = "";
@@ -59,16 +59,16 @@ function updateScore(event, redPenalty, bluePenalty) {
     bluePenalty = event.blue_penalty;
     pureScoreRed = event.red_score;
     pureScoreBlue = event.blue_score;
-    let pointPelanggaranSudutMerah = 0;
-    let pointPelanggaranSudutBiru = 0;
+    let redFoulPoints = 0;
+    let blueFoulPoints = 0;
     redPenalty.map((penalty) => {
-        pointPelanggaranSudutMerah += pelanggaranPoint[penalty];
+        redFoulPoints += FOUL_POINTS[penalty];
     });
     bluePenalty.map((penalty) => {
-        pointPelanggaranSudutBiru += pelanggaranPoint[penalty];
+        blueFoulPoints += FOUL_POINTS[penalty];
     });
-    const redScoreValue = pureScoreRed - pointPelanggaranSudutMerah;
-    const blueScoreValue = pureScoreBlue - pointPelanggaranSudutBiru;
+    const redScoreValue = pureScoreRed - redFoulPoints;
+    const blueScoreValue = pureScoreBlue - blueFoulPoints;
 
     const scoreData = {
         redScore: redScoreValue,
@@ -82,59 +82,59 @@ function updateScore(event, redPenalty, bluePenalty) {
     };
 
     localStorage.setItem("scoreData", JSON.stringify(scoreData));
-    if (window.location.pathname !== "/ketua_pertandingan") {
+    if (window.location.pathname !== "/match-chairman") {
         redScore.textContent = redScoreValue;
         blueScore.textContent = blueScoreValue;
     }
 }
-function startPertandingan(e) {
-    partaiId = e.id;
-    kelas = e.kelas;
-    namaMerah.textContent = e.redName;
-    kontingenMerah.textContent = e.redContingent;
-    namaBiru.textContent = e.blueName;
-    kontingenBiru.textContent = e.blueContingent;
-    babak.textContent = e.babak.toUpperCase();
+function startMatch(e) {
+    matchId = e.id;
+    matchClass = e.class;
+    redName.textContent = e.redName;
+    redContingent.textContent = e.redContingent;
+    blueName.textContent = e.blueName;
+    blueContingent.textContent = e.blueContingent;
+    matchRound.textContent = e.round.toUpperCase();
     activeRound.textContent = e.activeRound.toUpperCase();
 
-    const gelanggangData = {
-        partaiId: e.id,
-        kelas: e.kelas,
-        namaMerah: namaMerah.textContent,
-        kontingenMerah: kontingenMerah.textContent,
-        namaBiru: namaBiru.textContent,
-        kontingenBiru: kontingenBiru.textContent,
-        babak: babak.textContent,
+    const arenaData = {
+        matchId: e.id,
+        class: e.class,
+        redName: redName.textContent,
+        redContingent: redContingent.textContent,
+        blueName: blueName.textContent,
+        blueContingent: blueContingent.textContent,
+        round: matchRound.textContent,
         activeRound: activeRound.textContent,
     };
 
-    localStorage.setItem("gelanggangData", JSON.stringify(gelanggangData));
+    localStorage.setItem("arenaData", JSON.stringify(arenaData));
 }
 
-export function getDataGelanggang() {
+export function getArenaData() {
     return {
-        namaMerah: namaMerah.textContent,
-        kontingenMerah: kontingenMerah.textContent,
-        namaBiru: namaBiru.textContent,
-        kontingenBiru: kontingenBiru.textContent,
-        babak: babak.textContent,
+        redName: redName.textContent,
+        redContingent: redContingent.textContent,
+        blueName: blueName.textContent,
+        blueContingent: blueContingent.textContent,
+        round: matchRound.textContent,
         activeRound: activeRound.textContent,
     };
 }
 
 function loadDataSaved() {
-    partaiId = savedGelanggangData.partaiId;
-    kelas = savedGelanggangData.kelas;
-    namaMerah.textContent = savedGelanggangData.namaMerah;
-    kontingenMerah.textContent = savedGelanggangData.kontingenMerah;
-    namaBiru.textContent = savedGelanggangData.namaBiru;
-    kontingenBiru.textContent = savedGelanggangData.kontingenBiru;
-    babak.textContent = savedGelanggangData.babak;
-    activeRound.textContent = savedGelanggangData.activeRound;
+    matchId = savedArenaData.matchId;
+    matchClass = savedArenaData.class;
+    redName.textContent = savedArenaData.redName;
+    redContingent.textContent = savedArenaData.redContingent;
+    blueName.textContent = savedArenaData.blueName;
+    blueContingent.textContent = savedArenaData.blueContingent;
+    matchRound.textContent = savedArenaData.round;
+    activeRound.textContent = savedArenaData.activeRound;
     redPenalty = savedScoreData.redPenalty;
     bluePenalty = savedScoreData.bluePenalty;
     redScore.textContent = savedScoreData.redScore;
     blueScore.textContent = savedScoreData.blueScore;
 }
 
-export { startPertandingan, loadDataSaved, updateScore, changeScoreElement };
+export { startMatch, loadDataSaved, updateScore, changeScoreElement };

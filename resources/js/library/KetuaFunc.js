@@ -1,9 +1,9 @@
-let gelanggangData = JSON.parse(localStorage.getItem("gelanggangData"));
-let round = gelanggangData?.activeRound?.toLowerCase() || "ROUND";
+let arenaData = JSON.parse(localStorage.getItem("arenaData"));
+let round = arenaData?.activeRound?.toLowerCase() || "ROUND";
 let dropRed = [];
 let dropBlue = [];
-let savedGelanggangData = {};
-let savedKetuaData = {
+let savedArenaData = {};
+let savedChairmanData = {
     "round-1": {
         red: {},
         blue: {},
@@ -19,21 +19,21 @@ let savedKetuaData = {
 };
 let userElement = document.getElementById("user");
 const userData = JSON.parse(userElement.getAttribute("data-user"));
-export const channelKetuaPertandingan = Echo.join(
-    `presence.ketuaPertandingan.${userData.gelanggang_id}`
+export const matchChairmanChannel = Echo.join(
+    `presence.match-chairman.${userData.arena_id}`
 );
-const ketuaData = JSON.parse(localStorage.getItem("dataKetuaPertandingan"));
-const namaMerah = document.getElementById("nama_merah");
-const kontingenMerah = document.getElementById("kontingen_merah");
-const namaBiru = document.getElementById("nama_biru");
-const kontingenBiru = document.getElementById("kontingen_biru");
-const babak = document.getElementById("babak");
+const chairmanData = JSON.parse(localStorage.getItem("chairmanData"));
+const redName = document.getElementById("red-name");
+const redContingent = document.getElementById("red-contingent");
+const blueName = document.getElementById("blue-name");
+const blueContingent = document.getElementById("blue-contingent");
+const matchRound = document.getElementById("match-round");
 const activeRound = document.getElementById("round");
 
 const redCorner = {
-    jurror1: document.getElementById(`${round}-jurror1-red`),
-    jurror2: document.getElementById(`${round}-jurror2-red`),
-    jurror3: document.getElementById(`${round}-jurror3-red`),
+    juror1: document.getElementById(`${round}-juror1-red`),
+    juror2: document.getElementById(`${round}-juror2-red`),
+    juror3: document.getElementById(`${round}-juror3-red`),
     point: document.getElementById(`${round}-point-red`),
     dropping: document.getElementById(`${round}-dropping-red`),
     penalty: document.getElementById(`${round}-penalty-red`),
@@ -41,9 +41,9 @@ const redCorner = {
 };
 
 const blueCorner = {
-    jurror1: document.getElementById(`${round}-jurror1-blue`),
-    jurror2: document.getElementById(`${round}-jurror2-blue`),
-    jurror3: document.getElementById(`${round}-jurror3-blue`),
+    juror1: document.getElementById(`${round}-juror1-blue`),
+    juror2: document.getElementById(`${round}-juror2-blue`),
+    juror3: document.getElementById(`${round}-juror3-blue`),
     point: document.getElementById(`${round}-point-blue`),
     dropping: document.getElementById(`${round}-dropping-blue`),
     penalty: document.getElementById(`${round}-penalty-blue`),
@@ -51,9 +51,9 @@ const blueCorner = {
 };
 
 function initialDynamicDom() {
-    redCorner["jurror1"] = document.getElementById(`${round}-jurror1-red`);
-    redCorner["jurror2"] = document.getElementById(`${round}-jurror2-red`);
-    redCorner["jurror3"] = document.getElementById(`${round}-jurror3-red`);
+    redCorner["juror1"] = document.getElementById(`${round}-juror1-red`);
+    redCorner["juror2"] = document.getElementById(`${round}-juror2-red`);
+    redCorner["juror3"] = document.getElementById(`${round}-juror3-red`);
     redCorner["point"] = document.getElementById(`${round}-point-red`);
     redCorner["dropping"] = document.getElementById(`${round}-dropping-red`);
     redCorner["penalty"] = document.getElementById(`${round}-penalty-red`);
@@ -61,9 +61,9 @@ function initialDynamicDom() {
         `${round}-board-point-red`
     );
 
-    blueCorner["jurror1"] = document.getElementById(`${round}-jurror1-blue`);
-    blueCorner["jurror2"] = document.getElementById(`${round}-jurror2-blue`);
-    blueCorner["jurror3"] = document.getElementById(`${round}-jurror3-blue`);
+    blueCorner["juror1"] = document.getElementById(`${round}-juror1-blue`);
+    blueCorner["juror2"] = document.getElementById(`${round}-juror2-blue`);
+    blueCorner["juror3"] = document.getElementById(`${round}-juror3-blue`);
     blueCorner["point"] = document.getElementById(`${round}-point-blue`);
     blueCorner["dropping"] = document.getElementById(`${round}-dropping-blue`);
     blueCorner["penalty"] = document.getElementById(`${round}-penalty-blue`);
@@ -74,179 +74,177 @@ function initialDynamicDom() {
 
 function initialGeneralDom() {
     // round1
-    document.getElementById(`round-1-jurror1-red`).innerHTML =
-        ketuaData["round-1"]?.red?.jurror1 || "";
-    document.getElementById(`round-1-jurror2-red`).innerHTML =
-        ketuaData["round-1"]?.red?.jurror2 || "";
-    document.getElementById(`round-1-jurror3-red`).innerHTML =
-        ketuaData["round-1"]?.red?.jurror3 || "";
+    document.getElementById(`round-1-juror1-red`).innerHTML =
+        chairmanData["round-1"]?.red?.juror1 || "";
+    document.getElementById(`round-1-juror2-red`).innerHTML =
+        chairmanData["round-1"]?.red?.juror2 || "";
+    document.getElementById(`round-1-juror3-red`).innerHTML =
+        chairmanData["round-1"]?.red?.juror3 || "";
     document.getElementById(`round-1-point-red`).innerHTML =
-        ketuaData["round-1"]?.red?.point || 0;
+        chairmanData["round-1"]?.red?.point || 0;
     document.getElementById(`round-1-dropping-red`).innerHTML =
-        ketuaData["round-1"]?.red?.dropping || "";
+        chairmanData["round-1"]?.red?.dropping || "";
     document.getElementById(`round-1-penalty-red`).innerHTML =
-        ketuaData["round-1"]?.red?.penalty || "";
+        chairmanData["round-1"]?.red?.penalty || "";
     document.getElementById(`round-1-board-point-red`).innerHTML =
-        ketuaData["round-1"]?.red?.point || 0;
+        chairmanData["round-1"]?.red?.point || 0;
 
-    document.getElementById(`round-1-jurror1-blue`).innerHTML =
-        ketuaData["round-1"]?.blue?.jurror1 || "";
-    document.getElementById(`round-1-jurror2-blue`).innerHTML =
-        ketuaData["round-1"]?.blue?.jurror2 || "";
-    document.getElementById(`round-1-jurror3-blue`).innerHTML =
-        ketuaData["round-1"]?.blue?.jurror3 || "";
+    document.getElementById(`round-1-juror1-blue`).innerHTML =
+        chairmanData["round-1"]?.blue?.juror1 || "";
+    document.getElementById(`round-1-juror2-blue`).innerHTML =
+        chairmanData["round-1"]?.blue?.juror2 || "";
+    document.getElementById(`round-1-juror3-blue`).innerHTML =
+        chairmanData["round-1"]?.blue?.juror3 || "";
     document.getElementById(`round-1-point-blue`).innerHTML =
-        ketuaData["round-1"]?.blue?.point || 0;
+        chairmanData["round-1"]?.blue?.point || 0;
     document.getElementById(`round-1-dropping-blue`).innerHTML =
-        ketuaData["round-1"]?.blue?.dropping || "";
+        chairmanData["round-1"]?.blue?.dropping || "";
     document.getElementById(`round-1-penalty-blue`).innerHTML =
-        ketuaData["round-1"]?.blue?.penalty || "";
+        chairmanData["round-1"]?.blue?.penalty || "";
     document.getElementById(`round-1-board-point-blue`).innerHTML =
-        ketuaData["round-1"]?.blue?.point || 0;
+        chairmanData["round-1"]?.blue?.point || 0;
 
     // round 2
-    document.getElementById(`round-2-jurror1-red`).innerHTML =
-        ketuaData["round-2"]?.red?.jurror1 || "";
-    document.getElementById(`round-2-jurror2-red`).innerHTML =
-        ketuaData["round-2"]?.red?.jurror2 || "";
-    document.getElementById(`round-2-jurror3-red`).innerHTML =
-        ketuaData["round-2"]?.red?.jurror3 || "";
+    document.getElementById(`round-2-juror1-red`).innerHTML =
+        chairmanData["round-2"]?.red?.juror1 || "";
+    document.getElementById(`round-2-juror2-red`).innerHTML =
+        chairmanData["round-2"]?.red?.juror2 || "";
+    document.getElementById(`round-2-juror3-red`).innerHTML =
+        chairmanData["round-2"]?.red?.juror3 || "";
     document.getElementById(`round-2-point-red`).innerHTML =
-        ketuaData["round-2"]?.red?.point || 0;
+        chairmanData["round-2"]?.red?.point || 0;
     document.getElementById(`round-2-dropping-red`).innerHTML =
-        ketuaData["round-2"]?.red?.dropping || "";
+        chairmanData["round-2"]?.red?.dropping || "";
     document.getElementById(`round-2-penalty-red`).innerHTML =
-        ketuaData["round-2"]?.red?.penalty || "";
+        chairmanData["round-2"]?.red?.penalty || "";
     document.getElementById(`round-2-board-point-red`).innerHTML =
-        ketuaData["round-2"]?.red?.point || 0;
+        chairmanData["round-2"]?.red?.point || 0;
 
-    document.getElementById(`round-2-jurror1-blue`).innerHTML =
-        ketuaData["round-2"]?.blue?.jurror1 || "";
-    document.getElementById(`round-2-jurror2-blue`).innerHTML =
-        ketuaData["round-2"]?.blue?.jurror2 || "";
-    document.getElementById(`round-2-jurror3-blue`).innerHTML =
-        ketuaData["round-2"]?.blue?.jurror3 || "";
+    document.getElementById(`round-2-juror1-blue`).innerHTML =
+        chairmanData["round-2"]?.blue?.juror1 || "";
+    document.getElementById(`round-2-juror2-blue`).innerHTML =
+        chairmanData["round-2"]?.blue?.juror2 || "";
+    document.getElementById(`round-2-juror3-blue`).innerHTML =
+        chairmanData["round-2"]?.blue?.juror3 || "";
     document.getElementById(`round-2-point-blue`).innerHTML =
-        ketuaData["round-2"]?.blue?.point || 0;
+        chairmanData["round-2"]?.blue?.point || 0;
     document.getElementById(`round-2-dropping-blue`).innerHTML =
-        ketuaData["round-2"]?.blue?.dropping || "";
+        chairmanData["round-2"]?.blue?.dropping || "";
     document.getElementById(`round-2-penalty-blue`).innerHTML =
-        ketuaData["round-2"]?.blue?.penalty || "";
+        chairmanData["round-2"]?.blue?.penalty || "";
     document.getElementById(`round-2-board-point-blue`).innerHTML =
-        ketuaData["round-2"]?.blue?.point || 0;
+        chairmanData["round-2"]?.blue?.point || 0;
 
     // round 3
-    document.getElementById(`round-3-jurror1-red`).innerHTML =
-        ketuaData["round-3"]?.red?.jurror1 || "";
-    document.getElementById(`round-3-jurror2-red`).innerHTML =
-        ketuaData["round-3"]?.red?.jurror2 || "";
-    document.getElementById(`round-3-jurror3-red`).innerHTML =
-        ketuaData["round-3"]?.red?.jurror3 || "";
+    document.getElementById(`round-3-juror1-red`).innerHTML =
+        chairmanData["round-3"]?.red?.juror1 || "";
+    document.getElementById(`round-3-juror2-red`).innerHTML =
+        chairmanData["round-3"]?.red?.juror2 || "";
+    document.getElementById(`round-3-juror3-red`).innerHTML =
+        chairmanData["round-3"]?.red?.juror3 || "";
     document.getElementById(`round-3-point-red`).innerHTML =
-        ketuaData["round-3"]?.red?.point || 0;
+        chairmanData["round-3"]?.red?.point || 0;
     document.getElementById(`round-3-dropping-red`).innerHTML =
-        ketuaData["round-3"]?.red?.dropping || "";
+        chairmanData["round-3"]?.red?.dropping || "";
     document.getElementById(`round-3-penalty-red`).innerHTML =
-        ketuaData["round-3"]?.red?.penalty || "";
+        chairmanData["round-3"]?.red?.penalty || "";
     document.getElementById(`round-3-board-point-red`).innerHTML =
-        ketuaData["round-3"]?.red?.point || 0;
+        chairmanData["round-3"]?.red?.point || 0;
 
-    document.getElementById(`round-3-jurror1-blue`).innerHTML =
-        ketuaData["round-3"]?.blue?.jurror1 || "";
-    document.getElementById(`round-3-jurror2-blue`).innerHTML =
-        ketuaData["round-3"]?.blue?.jurror2 || "";
-    document.getElementById(`round-3-jurror3-blue`).innerHTML =
-        ketuaData["round-3"]?.blue?.jurror3 || "";
+    document.getElementById(`round-3-juror1-blue`).innerHTML =
+        chairmanData["round-3"]?.blue?.juror1 || "";
+    document.getElementById(`round-3-juror2-blue`).innerHTML =
+        chairmanData["round-3"]?.blue?.juror2 || "";
+    document.getElementById(`round-3-juror3-blue`).innerHTML =
+        chairmanData["round-3"]?.blue?.juror3 || "";
     document.getElementById(`round-3-point-blue`).innerHTML =
-        ketuaData["round-3"]?.blue?.point || 0;
+        chairmanData["round-3"]?.blue?.point || 0;
     document.getElementById(`round-3-dropping-blue`).innerHTML =
-        ketuaData["round-3"]?.blue?.dropping || "";
+        chairmanData["round-3"]?.blue?.dropping || "";
     document.getElementById(`round-3-penalty-blue`).innerHTML =
-        ketuaData["round-3"]?.blue?.penalty || "";
+        chairmanData["round-3"]?.blue?.penalty || "";
     document.getElementById(`round-3-board-point-blue`).innerHTML =
-        ketuaData["round-3"]?.blue?.point || 0;
+        chairmanData["round-3"]?.blue?.point || 0;
 }
 
-function storeGelanggangData(data) {
-    savedGelanggangData = data;
+function storeArenaData(data) {
+    savedArenaData = data;
 }
 
-function startPertandingan(e) {
+function startMatch(e) {
     round = e.activeRound;
-    namaMerah.textContent = e.redName;
-    kontingenMerah.textContent = e.redContingent;
-    namaBiru.textContent = e.blueName;
-    kontingenBiru.textContent = e.blueContingent;
-    babak.textContent = e.babak.toUpperCase();
+    redName.textContent = e.redName;
+    redContingent.textContent = e.redContingent;
+    blueName.textContent = e.blueName;
+    blueContingent.textContent = e.blueContingent;
+    matchRound.textContent = e.round.toUpperCase();
     activeRound.textContent = e.activeRound.toUpperCase();
 
-    const gelanggangData = {
-        namaMerah: e.redName,
-        kontingenMerah: e.redContingent,
-        namaBiru: e.blueName,
-        kontingenBiru: e.blueContingent,
-        babak: e.babak.toUpperCase(),
+    const arenaData = {
+        redName: e.redName,
+        redContingent: e.redContingent,
+        blueName: e.blueName,
+        blueContingent: e.blueContingent,
+        round: e.round.toUpperCase(),
         activeRound: e.activeRound,
     };
     initialDynamicDom();
 
-    localStorage.setItem("gelanggangData", JSON.stringify(gelanggangData));
+    localStorage.setItem("arenaData", JSON.stringify(arenaData));
 }
 
 function loadDataSaved() {
-    namaMerah.textContent = savedGelanggangData.namaMerah;
-    kontingenMerah.textContent = savedGelanggangData.kontingenMerah;
-    namaBiru.textContent = savedGelanggangData.namaBiru;
-    kontingenBiru.textContent = savedGelanggangData.kontingenBiru;
-    babak.textContent = savedGelanggangData.babak;
-    activeRound.textContent = savedGelanggangData.activeRound;
-    if (ketuaData) {
-        savedKetuaData = ketuaData;
+    redName.textContent = savedArenaData.redName;
+    redContingent.textContent = savedArenaData.redContingent;
+    blueName.textContent = savedArenaData.blueName;
+    blueContingent.textContent = savedArenaData.blueContingent;
+    matchRound.textContent = savedArenaData.round;
+    activeRound.textContent = savedArenaData.activeRound;
+    if (chairmanData) {
+        savedChairmanData = chairmanData;
         initialGeneralDom();
     }
 }
 
 function changeRound(event) {
-    const gelanggang = JSON.parse(localStorage.getItem("gelanggangData"));
+    const arena = JSON.parse(localStorage.getItem("arenaData"));
     round = event.activeRound;
     activeRound.textContent = round;
-    gelanggang.activeRound = round;
-    localStorage.setItem("gelanggangData", JSON.stringify(gelanggang));
+    arena.activeRound = round;
+    localStorage.setItem("arenaData", JSON.stringify(arena));
     resetDropping();
     initialDynamicDom();
 }
 
-function storeJurror(jurror, scorePiece, sudut) {
-    const corner = sudut === "red" ? redCorner : blueCorner;
+function storeJuror(juror, scorePiece, corner) {
+    const cornerData = corner === "red" ? redCorner : blueCorner;
 
-    let juriKey;
-    switch (jurror) {
-        case "Juri Pertama":
-            juriKey = "jurror1";
+    let jurorKey;
+    switch (juror) {
+        case "Jury 1":
+            jurorKey = "juror1";
             break;
-        case "Juri Kedua":
-            juriKey = "jurror2";
+        case "Jury 2":
+            jurorKey = "juror2";
             break;
-        case "Juri Ketiga":
-            juriKey = "jurror3";
+        case "Jury 3":
+            jurorKey = "juror3";
             break;
         default:
             break;
     }
-    corner[juriKey].innerHTML = scorePiece;
+    cornerData[jurorKey].innerHTML = scorePiece;
 
-    // Buat objek data yang akan ditambahkan
-    let dataJuriToAdd = {};
-    dataJuriToAdd[juriKey] = scorePiece;
+    let jurorDataToAdd = {};
+    jurorDataToAdd[jurorKey] = scorePiece;
 
-    // Perbarui savedKetuaData sesuai dengan sudut dan data baru
-    savedKetuaData[round][sudut] = {
-        ...savedKetuaData[round][sudut],
-        ...dataJuriToAdd,
+    savedChairmanData[round][corner] = {
+        ...savedChairmanData[round][corner],
+        ...jurorDataToAdd,
     };
     localStorage.setItem(
-        "dataKetuaPertandingan",
-        JSON.stringify(savedKetuaData)
+        "chairmanData",
+        JSON.stringify(savedChairmanData)
     );
 }
 
@@ -259,13 +257,11 @@ function storePoint() {
     redCorner.boardPoint.innerText = redScore;
     blueCorner.boardPoint.innerText = blueScore;
 
-    // Simpan data poin sesuai dengan sudutnya
-    savedKetuaData[round]["red"].point = redScore;
-    savedKetuaData[round]["blue"].point = blueScore;
-    // Simpan ke localStorage
+    savedChairmanData[round]["red"].point = redScore;
+    savedChairmanData[round]["blue"].point = blueScore;
     localStorage.setItem(
-        "dataKetuaPertandingan",
-        JSON.stringify(savedKetuaData)
+        "chairmanData",
+        JSON.stringify(savedChairmanData)
     );
 }
 
@@ -277,10 +273,10 @@ function storeDroppingRed(value) {
     }
     value = dropRed.join(",");
     redCorner.dropping.innerText = value;
-    savedKetuaData[round]["red"].dropping = value;
+    savedChairmanData[round]["red"].dropping = value;
     localStorage.setItem(
-        "dataKetuaPertandingan",
-        JSON.stringify(savedKetuaData)
+        "chairmanData",
+        JSON.stringify(savedChairmanData)
     );
 }
 
@@ -296,10 +292,10 @@ function storeDroppingBlue(value) {
     }
     value = dropBlue.join(",");
     blueCorner.dropping.innerText = value;
-    savedKetuaData[round]["blue"].dropping = value;
+    savedChairmanData[round]["blue"].dropping = value;
     localStorage.setItem(
-        "dataKetuaPertandingan",
-        JSON.stringify(savedKetuaData)
+        "chairmanData",
+        JSON.stringify(savedChairmanData)
     );
 }
 
@@ -312,10 +308,10 @@ function storeRedPenalty(value) {
     let redPenalty = value.join(", ");
     redPenalty = redPenalty.replace(/-/g, " ");
     redCorner.penalty.innerText = redPenalty;
-    savedKetuaData[round]["red"].penalty = redPenalty;
+    savedChairmanData[round]["red"].penalty = redPenalty;
     localStorage.setItem(
-        "dataKetuaPertandingan",
-        JSON.stringify(savedKetuaData)
+        "chairmanData",
+        JSON.stringify(savedChairmanData)
     );
 }
 
@@ -323,19 +319,19 @@ function storeBluePenalty(value) {
     let bluePenalty = value.join(", ");
     bluePenalty = bluePenalty.replace(/-/g, " ");
     blueCorner.penalty.innerText = bluePenalty;
-    savedKetuaData[round]["blue"].penalty = bluePenalty;
+    savedChairmanData[round]["blue"].penalty = bluePenalty;
     localStorage.setItem(
-        "dataKetuaPertandingan",
-        JSON.stringify(savedKetuaData)
+        "chairmanData",
+        JSON.stringify(savedChairmanData)
     );
 }
 
 export {
-    storeGelanggangData,
-    startPertandingan,
+    storeArenaData,
+    startMatch,
     loadDataSaved,
     changeRound,
-    storeJurror,
+    storeJuror,
     storePoint,
     storeDroppingRed,
     storeDroppingBlue,
