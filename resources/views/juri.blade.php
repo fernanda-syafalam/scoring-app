@@ -138,25 +138,6 @@
                             fill="white" />
                     </svg>
                 </button>
-                <div class="hidden lg:flex lg:flex-col lg:items-center ml-24">
-                    <p class="text-base font-bold">
-                        INDICATOR PUKULAN
-                    </p>
-                    <div class="flex justify-center mt-[8%]">
-                        <div id="juri-pertama-pukulan-blue"
-                            class="flex items-center justify-center bg-grayDefault shadow-inset-custom w-[68px] h-[45px] rounded-[10px]">
-                            <p class="text-whiteDefault">1</p>
-                        </div>
-                        <div id="juri-kedua-pukulan-blue"
-                            class="flex items-center justify-center bg-grayDefault shadow-inset-custom w-[68px] h-[45px] mx-[24px] rounded-[10px]">
-                            <p class="text-whiteDefault">1</p>
-                        </div>
-                        <div id="juri-ketiga-pukulan-blue"
-                            class="flex items-center justify-center bg-grayDefault shadow-inset-custom w-[68px] h-[45px] rounded-[10px]">
-                            <p class="text-whiteDefault">1</p>
-                        </div>
-                    </div>
-                </div>
             </div>
             <div class="flex items-center mt-0 lg:mt-[3%]">
                 <button id="tendang-biru" type="button"
@@ -175,25 +156,6 @@
                         </defs>
                     </svg>
                 </button>
-                <div class="hidden lg:flex lg:flex-col lg:items-center ml-24">
-                    <p class="text-base font-bold">
-                        INDICATOR TENDANGAN
-                    </p>
-                    <div class="flex justify-center mt-[8%]">
-                        <div id="juri-pertama-tendangan-blue"
-                            class="flex items-center justify-center bg-grayDefault shadow-inset-custom w-[68px] h-[45px] rounded-[10px]">
-                            <p class="text-whiteDefault">2</p>
-                        </div>
-                        <div id="juri-kedua-tendangan-blue"
-                            class="flex items-center justify-center bg-grayDefault shadow-inset-custom w-[68px] h-[45px] mx-[24px] rounded-[10px]">
-                            <p class="text-whiteDefault">2</p>
-                        </div>
-                        <div id="juri-ketiga-tendangan-blue"
-                            class="flex items-center justify-center bg-grayDefault shadow-inset-custom w-[68px] h-[45px] rounded-[10px]">
-                            <p class="text-whiteDefault">2</p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -202,25 +164,6 @@
         <!--Right side-->
         <div class="flex flex-row lg:flex-col justify-end lg:justify-start items-end w-[50%]">
             <div class="flex items-center">
-                <div class="hidden lg:flex lg:flex-col lg:items-center mr-24">
-                    <p class="text-base font-bold">
-                        INDICATOR PUKULAN
-                    </p>
-                    <div class="flex justify-center mt-[8%]">
-                        <div id="juri-pertama-pukulan-red"
-                            class="flex items-center justify-center bg-grayDefault shadow-inset-custom w-[68px] h-[45px] rounded-[10px]">
-                            <p class="text-whiteDefault">1</p>
-                        </div>
-                        <div id="juri-kedua-pukulan-red"
-                            class="flex items-center justify-center bg-grayDefault shadow-inset-custom w-[68px] h-[45px] mx-[24px] rounded-[10px]">
-                            <p class="text-whiteDefault">1</p>
-                        </div>
-                        <div id="juri-ketiga-pukulan-red"
-                            class="flex items-center justify-center bg-grayDefault shadow-inset-custom w-[68px] h-[45px] rounded-[10px]">
-                            <p class="text-whiteDefault">1</p>
-                        </div>
-                    </div>
-                </div>
                 <button id="pukul-merah" type="button"
                     class="bg-redDefault shadow-inset-custom hover:bg-redDark disabled:cursor-not-allowed rounded-[24px] text-sm px-5 py-2.5 text-center inline-flex items-center mr-2 mb-2 transform transition-transform ease-in-out duration-100 active:scale-95">
                     <svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 90 90"
@@ -232,25 +175,6 @@
                 </button>
             </div>
             <div class="flex items-center mt-[3%]">
-                <div class="hidden lg:flex lg:flex-col lg:items-center mr-24">
-                    <p class="text-base font-bold">
-                        INDICATOR TENDANGAN
-                    </p>
-                    <div class="flex justify-center mt-[8%]">
-                        <div id="juri-pertama-tendangan-red"
-                            class="flex items-center justify-center bg-grayDefault shadow-inset-custom w-[68px] h-[45px] rounded-[10px]">
-                            <p class="text-whiteDefault">2</p>
-                        </div>
-                        <div id="juri-kedua-tendangan-red"
-                            class="flex items-center justify-center bg-grayDefault shadow-inset-custom w-[68px] h-[45px] mx-[24px] rounded-[10px]">
-                            <p class="text-whiteDefault">2</p>
-                        </div>
-                        <div id="juri-ketiga-tendangan-red"
-                            class="flex items-center justify-center bg-grayDefault shadow-inset-custom w-[68px] h-[45px] rounded-[10px]">
-                            <p class="text-whiteDefault">2</p>
-                        </div>
-                    </div>
-                </div>
                 <button id="tendang-merah" type="button"
                     class="bg-redDefault shadow-inset-custom hover:bg-redDark disabled:cursor-not-allowed rounded-[24px] text-sm px-5 py-2.5 text-center inline-flex items-center mr-2 mb-2 transform transition-transform ease-in-out duration-100 active:scale-95">
                     <svg xmlns="http://www.w3.org/2000/svg" width="92" height="90" viewBox="0 0 92 90"
