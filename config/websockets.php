@@ -69,11 +69,11 @@ return [
             'key' => env('PUSHER_APP_KEY'),
             'secret' => env('PUSHER_APP_SECRET'),
             'path' => env('PUSHER_APP_PATH'),
-            'capacity' => null,
+            'capacity' => env('WEBSOCKET_MAX_CONNECTIONS', 500), // Increased from 100 to 500 for better concurrency
             'enable_client_messages' => false,
-            'enable_statistics' => true,
+            'enable_statistics' => env('WEBSOCKET_STATISTICS', false), // Disabled to reduce latency - enable only when needed
             'allowed_origins' => [
-                // env('LARAVEL_WEBSOCKETS_DOMAIN'),
+                env('PUSHER_APP_HOST', 'localhost'), // Specific to LAN host
             ],
         ],
     ],

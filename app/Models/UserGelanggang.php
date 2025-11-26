@@ -8,8 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class UserGelanggang extends Model
 {
     use HasFactory;
+
     protected $table = 'users_gelanggangs';
-    protected $guarded =['id'];
+
+    protected $fillable = [
+        'user_id',
+        'gelanggang_id',
+    ];
 
     // Relasi dengan model User
     public function user()

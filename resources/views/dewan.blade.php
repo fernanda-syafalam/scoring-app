@@ -16,6 +16,7 @@
         <label for="user"></label><input id="user" type="text" hidden="hidden"
             data-user="{{ $gelangang }}" detail-user="{{ auth()->user() }}">
         <x-winner-modal />
+        <x-websocket-status />
 
         <div class="flex justify-between">
             <div>

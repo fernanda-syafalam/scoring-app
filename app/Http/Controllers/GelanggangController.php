@@ -13,7 +13,7 @@ class GelanggangController extends Controller
 {
     public function index(Request $request)
     {
-        if (env("MANAGEMENT_ROLE")){
+        if (config('app_settings.management_role_enabled')){
             $this->authorize("admin");
         }
         $gelanggang = $this->listGelanggang();

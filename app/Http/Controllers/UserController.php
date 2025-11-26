@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Contracts\Foundation\Application;
@@ -22,112 +24,76 @@ class UserController extends Controller
      */
     public function index()
     {
-        if (env("MANAGEMENT_ROLE")){
+        if (config('app_settings.management_role_enabled')){
             $this->authorize("admin");
         }
-        $users = User::latest();
-        $search = \request('search') ?? '';
-        if ($search != ''){
-            $users->whereRaw("LOWER(name) LIKE ?", ['%' . strtolower($search) . '%'])
-                ->orWhereRaw("LOWER(username) LIKE ?", ['%' . strtolower($search) . '%']);
-        }
-        $role = Role::all();
+
+        $search = request('search') ?? '';
+
+        $users = User::with(['role', 'gelanggang'])
+            ->when($search, function($query) use ($search) {
+                return $query->where('name', 'ilike', "%{$search}%")
+                            ->orWhere('username', 'ilike', "%{$search}%");
+            })
+            ->latest()
+            ->paginate(10);
+
+        $roles = Role::all();
+
         return view('management.users.users', [
             'title' => 'users',
-            'data' => $users->paginate(10),
-            'roles' => $role
+            'data' => $users,
+            'roles' => $roles
         ]);
     }
     /**
      * Show the form for creating a new resource.
      *
+     * @param StoreUserRequest $request
      * @return Application|RedirectResponse|Redirector
      */
-    public function create(Request $request)
+    public function create(StoreUserRequest $request)
     {
-        $validatedData = $request->validate([
-            'name' => 'required|max:100|min:5',
-            'username' => 'required|max:100|min:5|unique:users',
-            'role_id'=> 'required|numeric',
-            'password' => ['required','min:5']
-        ]);
+        $validatedData = $request->validated();
         $validatedData['password'] = Hash::make($validatedData['password']);
+
         User::create($validatedData);
 
-//        $request->session()->flash('success', 'Registration successfully! login');
-
-        return redirect('/management')->with('success', 'Registration successfully!');
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param Request $request
-     * @return void
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param User $user
-     * @return void
-     */
-    public function show(User $user)
-    {
-        //
+        return redirect('/management')->with('success', 'Pengguna berhasil ditambahkan!');
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param User $user
-     * @return Application|Factory|View
+     * @param UpdateUserRequest $request
+     * @param int $id
+     * @return Application|RedirectResponse|Redirector
      */
-    public function edit(Request $request,$id)
+    public function edit(UpdateUserRequest $request, $id)
     {
-        $validatedData = $request->validate([
-            'name' => 'required|max:100|min:5',
-            'username' => 'required|max:100|min:5',
-            'role_id'=> 'required|numeric',
-            'password' => 'nullable|string|min:5',
-        ]);
+        $validatedData = $request->validated();
         $user = User::findOrFail($id);
-        if ($validatedData['password'] !== null)
-        {
+
+        if (!empty($validatedData['password'])) {
             $validatedData['password'] = Hash::make($validatedData['password']);
-        }else{
-            Arr::forget($validatedData, 'password');
+        } else {
+            unset($validatedData['password']);
         }
+
         $user->update($validatedData);
 
-        return redirect('/management')->with('success', 'User updated successfully.');
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param Request $request
-     * @param User $user
-     * @return void
-     */
-    public function update(Request $request, User $user)
-    {
-
+        return redirect('/management')->with('success', 'Pengguna berhasil diperbarui!');
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param User $user
-     * @return void
+     * @param int $id
+     * @return RedirectResponse
      */
     public function destroy($id)
     {
         User::destroy($id);
-        return redirect('management')->with('success', 'Users has been deleted');
+        return redirect('management')->with('success', 'Pengguna berhasil dihapus!');
     }
 }

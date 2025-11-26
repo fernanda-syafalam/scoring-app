@@ -17,6 +17,7 @@
 </head>
 
 <body>
+    <x-websocket-status />
     <label for="user"></label><input id="user" type="text" hidden="hidden" data-user="{{ $gelanggang }}">
     <label for="partai"></label><input id="partai" type="text" hidden="hidden"
         data-partai="{{ $partai_pertama[0] }}">

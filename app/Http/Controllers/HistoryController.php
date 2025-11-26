@@ -10,7 +10,7 @@ class HistoryController extends Controller
 {
     public function index()
     {
-        if (env("MANAGEMENT_ROLE")){
+        if (config('app_settings.management_role_enabled')){
             $this->authorize("adtor") ;
         }
         $record = Record::latest();

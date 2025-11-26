@@ -19,7 +19,7 @@ class UserFactory extends Factory
             'name' => $this->faker->name(),
             'username' => $this->faker->name(),
             'role_id' => $this->faker->numberBetween(1,8),
-            'password' => Hash::make('12345'),
+            'password' => Hash::make('password'),
         ];
     }
 

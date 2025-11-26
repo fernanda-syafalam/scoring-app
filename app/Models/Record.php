@@ -7,7 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Record extends Model
 {
-    protected $table = 'log_pertandingan';
-    protected $guarded =['id'];
     use HasFactory;
+
+    protected $table = 'log_pertandingan';
+
+    protected $fillable = [
+        'partai',
+        'kelas',
+        'jenis_kelamin',
+        'sudut_biru',
+        'sudut_merah',
+        'kontingen_merah',
+        'kontingen_biru',
+        'babak',
+        'pemenang',
+        'round_time',
+    ];
 }

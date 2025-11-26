@@ -60,7 +60,7 @@ class AuthController extends Controller
         $thisMenu = 'management';
         foreach ($managementRole as $menu => $roles) {
             foreach ($roles as $item) {
-                if ($item === $role['name'] && env("MANAGEMENT_ROLE")) {
+                if ($item === $role['name'] && config('app_settings.management_role_enabled')) {
                     $thisMenu = $menu;
                     break;
                 }

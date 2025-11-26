@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Load Test - Scoring App</title>
+    <script src="https://js.pusher.com/8.0.2/pusher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .control-panel {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 2px solid #e2e8f0;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+        .btn-warning {
+            background: #ed8936;
+            color: white;
+        }
+        .btn-secondary {
+            background: #718096;
+            color: white;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 8px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .metric-card h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        .metric-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .metric-card .unit {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .connection-status {
+            padding: 15px 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            border: 2px solid;
+            transition: all 0.3s;
+        }
+        .status-connecting {
+            background: #fef5e7;
+            border-color: #f39c12;
+            color: #f39c12;
+        }
+        .status-connected {
+            background: #d4edda;
+            border-color: #48bb78;
+            color: #48bb78;
+        }
+        .status-disconnected {
+            background: #f8d7da;
+            border-color: #f56565;
+            color: #f56565;
+        }
+        .status-failed {
+            background: #fadbd8;
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+        .log-container {
+            background: #1a202c;
+            color: #68d391;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+        }
+        .log-success { color: #68d391; }
+        .log-error { color: #fc8181; }
+        .log-warning { color: #f6ad55; }
+        .log-info { color: #63b3ed; }
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+        .alert-info {
+            background: #bee3f8;
+            border-color: #3182ce;
+            color: #2c5282;
+        }
+        .alert-success {
+            background: #c6f6d5;
+            border-color: #38a169;
+            color: #22543d;
+        }
+        .alert-warning {
+            background: #feebc8;
+            border-color: #dd6b20;
+            color: #7c2d12;
+        }
+        .alert-danger {
+            background: #fed7d7;
+            border-color: #e53e3e;
+            color: #742a2a;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2d3748;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-height: 400px;
+            position: relative;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            margin-bottom: 10px;
+        }
+        .percentile-badges {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .error-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .error-category {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #f56565;
+        }
+        .error-category.timeout {
+            border-left-color: #ed8936;
+        }
+        .error-category.connection {
+            border-left-color: #3182ce;
+        }
+        .error-category.other {
+            border-left-color: #718096;
+        }
+        .error-count {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        .error-label {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+        }
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .btn-preset {
+            padding: 8px 12px;
+            border: 2px solid #cbd5e0;
+            background: white;
+            color: #2d3748;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .btn-preset:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        .btn-preset.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .export-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 WebSocket Load Test</h1>
+        <p class="subtitle">Test WebSocket performance with multiple concurrent connections</p>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <label style="margin-bottom: 10px; font-weight: 600;">Quick Presets:</label>
+            <div class="preset-buttons">
+                <button class="btn-preset" onclick="applyPreset('baseline')">📊 Baseline</button>
+                <button class="btn-preset" onclick="applyPreset('production')">🏢 Production</button>
+                <button class="btn-preset" onclick="applyPreset('stress')">⚡ Stress</button>
+                <button class="btn-preset" onclick="applyPreset('endurance')">🏃 Endurance</button>
+            </div>
+
+            <div class="input-group">
+                <label for="wsHost">WebSocket Host</label>
+                <input type="text" id="wsHost" value="127.0.0.1" placeholder="e.g., 192.168.1.100">
+            </div>
+            <div class="input-group">
+                <label for="wsPort">WebSocket Port</label>
+                <input type="number" id="wsPort" value="6001" placeholder="6001">
+            </div>
+            <div class="input-group">
+                <label for="appKey">App Key</label>
+                <input type="text" id="appKey" value="scoring">
+            </div>
+            <div class="input-group">
+                <label for="connectionCount">Number of Connections</label>
+                <input type="number" id="connectionCount" value="20" min="1" max="100">
+            </div>
+            <div class="input-group">
+                <label for="testDuration">Test Duration (seconds)</label>
+                <input type="number" id="testDuration" value="60" min="10" max="3600">
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="startTest()">🚀 Start Test</button>
+                <button class="btn-danger" onclick="stopTest()">⏹ Stop Test</button>
+                <button class="btn-success" onclick="sendTestEvent()">📤 Send Test Event</button>
+                <button class="btn-warning" onclick="stressTest()">⚡ Stress Test</button>
+                <button class="btn-secondary" onclick="clearLogs()">🗑 Clear Logs</button>
+            </div>
+
+            <div class="export-section">
+                <button class="btn-secondary" onclick="exportResults()">💾 Export JSON</button>
+            </div>
+        </div>
+
+        <!-- Metrics Dashboard -->
+        <div class="section-title">📊 Real-Time Metrics</div>
+        <div class="metrics">
+            <div class="metric-card">
+                <h3>Active Connections</h3>
+                <div class="value" id="activeConnections">0</div>
+            </div>
+            <div class="metric-card">
+                <h3>Success Rate</h3>
+                <div class="value" id="successRate">0%</div>
+            </div>
+            <div class="metric-card">
+                <h3>Avg Latency</h3>
+                <div class="value" id="avgLatency">0<span class="unit">ms</span></div>
+            </div>
+            <div class="metric-card">
+                <h3>P95 Latency</h3>
+                <div class="value" id="p95Latency">0<span class="unit">ms</span></div>
+            </div>
+            <div class="metric-card">
+                <h3>P99 Latency</h3>
+                <div class="value" id="p99Latency">0<span class="unit">ms</span></div>
+            </div>
+            <div class="metric-card">
+                <h3>Events Received</h3>
+                <div class="value" id="eventsReceived">0</div>
+            </div>
+            <div class="metric-card">
+                <h3>Failed Connections</h3>
+                <div class="value" id="failedConnections">0</div>
+            </div>
+            <div class="metric-card">
+                <h3>Health Score</h3>
+                <div class="value" id="healthScore">100%</div>
+            </div>
+        </div>
+
+        <!-- Latency Trend Chart -->
+        <div class="section-title">📈 Latency Trend</div>
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <canvas id="latencyChart"></canvas>
+            </div>
+            <div class="percentile-badges">
+                <div class="badge">Min: <span id="minLatencyBadge">0ms</span></div>
+                <div class="badge">Max: <span id="maxLatencyBadge">0ms</span></div>
+                <div class="badge">Jitter: <span id="jitterBadge">0ms</span></div>
+            </div>
+        </div>
+
+        <!-- Error Analysis -->
+        <div class="section-title">⚠️ Error Analysis</div>
+        <div class="error-categories" id="errorCategories"></div>
+
+        <!-- Connection Status Grid -->
+        <div class="section-title">🔌 Connection Status</div>
+        <div class="status-grid" id="statusGrid"></div>
+
+        <!-- Logs -->
+        <div class="section-title">📝 Test Logs</div>
+        <div class="log-container" id="logContainer"></div>
+    </div>
+
+    <script>
+        // Global state
+        const state = {
+            connections: [],
+            metrics: {
+                active: 0,
+                successful: 0,
+                failed: 0,
+                eventsReceived: 0,
+                latencySamples: [],
+                startTime: null,
+                errors: [],
+                errorsByType: { timeout: 0, connection: 0, other: 0 }
+            },
+            isRunning: false,
+            testInterval: null,
+            latencyChart: null,
+            chartData: {
+                labels: [],
+                values: []
+            }
+        };
+
+        // Test presets configuration
+        const presets = {
+            baseline: { connections: 10, duration: 30, label: 'Baseline' },
+            production: { connections: 50, duration: 120, label: 'Production' },
+            stress: { connections: 100, duration: 60, label: 'Stress' },
+            endurance: { connections: 20, duration: 600, label: 'Endurance' }
+        };
+
+        // Logging functions
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logContainer').innerHTML = '';
+            log('Logs cleared', 'info');
+        }
+
+        // Utility: Calculate percentile
+        function calculatePercentile(arr, percentile) {
+            if (arr.length === 0) return 0;
+            const sorted = [...arr].sort((a, b) => a - b);
+            const index = Math.ceil((percentile / 100) * sorted.length) - 1;
+            return sorted[Math.max(0, index)];
+        }
+
+        // Utility: Categorize errors
+        function categorizeError(errorObj) {
+            const errorStr = JSON.stringify(errorObj).toLowerCase();
+            if (errorStr.includes('timeout') || errorStr.includes('pong')) return 'timeout';
+            if (errorStr.includes('connection') || errorStr.includes('refused')) return 'connection';
+            return 'other';
+        }
+
+        // Utility: Initialize or update latency chart
+        function initializeChart() {
+            const ctx = document.getElementById('latencyChart')?.getContext('2d');
+            if (!ctx) return;
+
+            if (state.latencyChart) {
+                state.latencyChart.destroy();
+            }
+
+            state.latencyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Latency (ms)',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#667eea',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#718096' },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            ticks: { color: '#718096' },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Utility: Update chart with new data
+        function updateChart() {
+            if (!state.latencyChart || state.metrics.latencySamples.length === 0) return;
+
+            const samples = state.metrics.latencySamples;
+            const step = Math.max(1, Math.floor(samples.length / 30)); // Limit to 30 points
+            const displaySamples = samples.filter((_, i) => i % step === 0);
+
+            state.latencyChart.data.labels = displaySamples.map((_, i) => `${i * step}`);
+            state.latencyChart.data.datasets[0].data = displaySamples;
+            state.latencyChart.update('none');
+        }
+
+        // Utility: Update error categories display
+        function updateErrorCategories() {
+            const container = document.getElementById('errorCategories');
+            const errors = state.metrics.errorsByType;
+
+            const categories = [
+                { type: 'timeout', label: 'Timeouts', count: errors.timeout },
+                { type: 'connection', label: 'Connection Errors', count: errors.connection },
+                { type: 'other', label: 'Other Errors', count: errors.other }
+            ];
+
+            container.innerHTML = categories.map(cat => `
+                <div class="error-category ${cat.type}">
+                    <div class="error-count">${cat.count}</div>
+                    <div class="error-label">${cat.label}</div>
+                </div>
+            `).join('');
+        }
+
+        // Utility: Apply test preset
+        function applyPreset(presetName) {
+            const preset = presets[presetName];
+            if (!preset) return;
+
+            document.getElementById('connectionCount').value = preset.connections;
+            document.getElementById('testDuration').value = preset.duration;
+
+            // Highlight active preset
+            document.querySelectorAll('.btn-preset').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            log(`✓ Applied "${preset.label}" preset (${preset.connections} connections, ${preset.duration}s)`, 'info');
+        }
+
+        // Utility: Export test results as JSON
+        function exportResults() {
+            if (state.metrics.latencySamples.length === 0) {
+                log('No test data to export. Run a test first.', 'warning');
+                return;
+            }
+
+            const p95 = calculatePercentile(state.metrics.latencySamples, 95);
+            const p99 = calculatePercentile(state.metrics.latencySamples, 99);
+            const avgLatency = state.metrics.latencySamples.reduce((a, b) => a + b, 0) / state.metrics.latencySamples.length;
+            const maxLatency = Math.max(...state.metrics.latencySamples);
+            const minLatency = Math.min(...state.metrics.latencySamples);
+
+            const results = {
+                timestamp: new Date().toISOString(),
+                testConfig: {
+                    host: document.getElementById('wsHost').value,
+                    port: document.getElementById('wsPort').value,
+                    appKey: document.getElementById('appKey').value,
+                    connectionCount: parseInt(document.getElementById('connectionCount').value)
+                },
+                metrics: {
+                    duration: ((Date.now() - state.metrics.startTime) / 1000).toFixed(2),
+                    successful: state.metrics.successful,
+                    failed: state.metrics.failed,
+                    active: state.metrics.active,
+                    eventsReceived: state.metrics.eventsReceived,
+                    latency: {
+                        avg: avgLatency.toFixed(2),
+                        min: minLatency.toFixed(2),
+                        max: maxLatency.toFixed(2),
+                        p95: p95.toFixed(2),
+                        p99: p99.toFixed(2),
+                        jitter: (maxLatency - minLatency).toFixed(2)
+                    }
+                },
+                errors: {
+                    total: state.metrics.errors.length,
+                    byType: state.metrics.errorsByType
+                }
+            };
+
+            const dataStr = JSON.stringify(results, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `websocket-test-${new Date().getTime()}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+
+            log('✓ Test results exported successfully', 'success');
+        }
+
+        // Update metrics display
+        function updateMetrics() {
+            document.getElementById('activeConnections').textContent = state.metrics.active;
+
+            const totalAttempts = state.metrics.successful + state.metrics.failed;
+            const successRate = totalAttempts > 0
+                ? ((state.metrics.successful / totalAttempts) * 100).toFixed(1)
+                : 100;
+            document.getElementById('successRate').textContent = successRate + '%';
+
+            const avgLatency = state.metrics.latencySamples.length > 0
+                ? (state.metrics.latencySamples.reduce((a, b) => a + b, 0) / state.metrics.latencySamples.length).toFixed(2)
+                : 0;
+            document.getElementById('avgLatency').innerHTML = avgLatency + '<span class="unit">ms</span>';
+
+            // Calculate and display percentiles
+            const p95 = calculatePercentile(state.metrics.latencySamples, 95);
+            const p99 = calculatePercentile(state.metrics.latencySamples, 99);
+            document.getElementById('p95Latency').innerHTML = p95.toFixed(2) + '<span class="unit">ms</span>';
+            document.getElementById('p99Latency').innerHTML = p99.toFixed(2) + '<span class="unit">ms</span>';
+
+            document.getElementById('eventsReceived').textContent = state.metrics.eventsReceived;
+            document.getElementById('failedConnections').textContent = state.metrics.failed;
+
+            // Update chart and badges
+            if (state.metrics.latencySamples.length > 0) {
+                const maxLatency = Math.max(...state.metrics.latencySamples);
+                const minLatency = Math.min(...state.metrics.latencySamples);
+                const jitter = (maxLatency - minLatency).toFixed(2);
+
+                document.getElementById('minLatencyBadge').textContent = minLatency.toFixed(2) + 'ms';
+                document.getElementById('maxLatencyBadge').textContent = maxLatency.toFixed(2) + 'ms';
+                document.getElementById('jitterBadge').textContent = jitter + 'ms';
+
+                updateChart();
+            }
+
+            // Calculate health score
+            let health = 100;
+            if (totalAttempts > 0) {
+                health -= ((state.metrics.failed / totalAttempts) * 40);
+            }
+            if (avgLatency > 500) health -= 20;
+            else if (avgLatency > 200) health -= 10;
+            if (state.metrics.errors.length > 5) health -= 20;
+            health = Math.max(0, Math.min(100, health));
+            document.getElementById('healthScore').textContent = health.toFixed(0) + '%';
+        }
+
+        // Create connection
+        function createConnection(index) {
+            const host = document.getElementById('wsHost').value;
+            const port = document.getElementById('wsPort').value;
+            const appKey = document.getElementById('appKey').value;
+
+            const startTime = performance.now();
+
+            try {
+                // Check if Pusher is loaded
+                if (typeof Pusher === 'undefined') {
+                    throw new Error('Pusher library not loaded. Please check your internet connection.');
+                }
+
+                const pusher = new Pusher(appKey, {
+                    wsHost: host,
+                    wsPort: port,
+                    wssPort: port,
+                    forceTLS: false,
+                    encrypted: false,
+                    disableStats: true,
+                    enabledTransports: ['ws', 'wss'],
+                    cluster: 'mt1', // Required by Pusher v8 (ignored for custom host)
+                    activityTimeout: 30000,
+                    pongTimeout: 10000,
+                    unavailableTimeout: 5000,
+                });
+
+                const connection = {
+                    index,
+                    pusher,
+                    state: 'connecting',
+                    connectedAt: null
+                };
+
+                // Connection events
+                pusher.connection.bind('connected', () => {
+                    const latency = performance.now() - startTime;
+                    connection.state = 'connected';
+                    connection.connectedAt = Date.now();
+                    state.metrics.active++;
+                    state.metrics.successful++;
+                    state.metrics.latencySamples.push(latency);
+
+                    // Keep only last 100 samples
+                    if (state.metrics.latencySamples.length > 100) {
+                        state.metrics.latencySamples.shift();
+                    }
+
+                    updateConnectionStatus(index, 'connected');
+                    updateMetrics();
+                    log(`Connection #${index + 1} established (${latency.toFixed(2)}ms)`, 'success');
+                });
+
+                pusher.connection.bind('disconnected', () => {
+                    connection.state = 'disconnected';
+                    state.metrics.active = Math.max(0, state.metrics.active - 1);
+                    updateConnectionStatus(index, 'disconnected');
+                    updateMetrics();
+                    log(`Connection #${index + 1} disconnected`, 'warning');
+                });
+
+                pusher.connection.bind('failed', () => {
+                    connection.state = 'failed';
+                    state.metrics.failed++;
+                    updateConnectionStatus(index, 'failed');
+                    updateMetrics();
+                    log(`Connection #${index + 1} failed`, 'error');
+                });
+
+                pusher.connection.bind('error', (err) => {
+                    const errorMsg = err.error?.message || err.error || err.type || JSON.stringify(err);
+                    const errorType = categorizeError(err);
+                    state.metrics.errors.push({ time: Date.now(), error: err, type: errorType });
+                    state.metrics.errorsByType[errorType]++;
+                    updateErrorCategories();
+                    log(`Connection #${index + 1} error: ${errorMsg}`, 'error');
+                });
+
+                // Subscribe to test channel
+                const channel = pusher.subscribe('gelanggang.1');
+
+                channel.bind('scoring-update', (data) => {
+                    state.metrics.eventsReceived++;
+                    updateMetrics();
+                });
+
+                state.connections.push(connection);
+                updateConnectionStatus(index, 'connecting');
+
+            } catch (error) {
+                state.metrics.failed++;
+                updateMetrics();
+                const errorMsg = error.message || error.toString() || 'Unknown error';
+                log(`Failed to create connection #${index + 1}: ${errorMsg}`, 'error');
+                console.error('Connection creation error:', error);
+            }
+        }
+
+        // Update connection status in grid
+        function updateConnectionStatus(index, status) {
+            const statusElement = document.getElementById(`conn-${index}`);
+            if (statusElement) {
+                statusElement.className = `connection-status status-${status}`;
+                statusElement.textContent = `#${index + 1}\n${status}`;
+            }
+        }
+
+        // Start test
+        function startTest() {
+            if (state.isRunning) {
+                log('Test already running', 'warning');
+                return;
+            }
+
+            const count = parseInt(document.getElementById('connectionCount').value);
+            const duration = parseInt(document.getElementById('testDuration').value);
+
+            // Reset state
+            stopTest();
+            state.metrics = {
+                active: 0,
+                successful: 0,
+                failed: 0,
+                eventsReceived: 0,
+                latencySamples: [],
+                startTime: Date.now(),
+                errors: [],
+                errorsByType: { timeout: 0, connection: 0, other: 0 }
+            };
+            updateErrorCategories();
+            initializeChart();
+            updateMetrics();
+
+            log(`🚀 Starting load test with ${count} connections for ${duration} seconds...`, 'info');
+            state.isRunning = true;
+
+            // Create status grid
+            const statusGrid = document.getElementById('statusGrid');
+            statusGrid.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const statusDiv = document.createElement('div');
+                statusDiv.id = `conn-${i}`;
+                statusDiv.className = 'connection-status status-connecting';
+                statusDiv.textContent = `#${i + 1}\nconnecting`;
+                statusGrid.appendChild(statusDiv);
+            }
+
+            // Create connections with delay to prevent overwhelming
+            let created = 0;
+            const createInterval = setInterval(() => {
+                if (created < count) {
+                    createConnection(created);
+                    created++;
+                } else {
+                    clearInterval(createInterval);
+                    log(`All ${count} connections initiated`, 'success');
+                }
+            }, 100); // 100ms delay between each connection
+
+            // Auto-stop after duration
+            setTimeout(() => {
+                if (state.isRunning) {
+                    log(`Test duration (${duration}s) completed`, 'info');
+                    generateReport();
+                }
+            }, duration * 1000);
+        }
+
+        // Stop test
+        function stopTest() {
+            if (!state.isRunning && state.connections.length === 0) {
+                return;
+            }
+
+            log('Stopping test and disconnecting all connections...', 'warning');
+
+            state.connections.forEach((conn, index) => {
+                try {
+                    conn.pusher.disconnect();
+                } catch (e) {
+                    log(`Error disconnecting #${index + 1}: ${e.message}`, 'error');
+                }
+            });
+
+            state.connections = [];
+            state.isRunning = false;
+
+            if (state.testInterval) {
+                clearInterval(state.testInterval);
+                state.testInterval = null;
+            }
+
+            log('All connections closed', 'info');
+            generateReport();
+        }
+
+        // Send test event
+        function sendTestEvent() {
+            if (state.metrics.active === 0) {
+                log('No active connections. Start test first.', 'warning');
+                return;
+            }
+
+            // This would typically call your Laravel backend to broadcast an event
+            log(`Simulating broadcast event to ${state.metrics.active} connections...`, 'info');
+            log('Note: Use your Laravel app to send real events (e.g., score updates)', 'info');
+        }
+
+        // Stress test
+        function stressTest() {
+            if (state.isRunning) {
+                log('Stop current test before starting stress test', 'warning');
+                return;
+            }
+
+            log('🔥 Starting stress test...', 'warning');
+            document.getElementById('connectionCount').value = 50;
+            document.getElementById('testDuration').value = 120;
+
+            setTimeout(() => {
+                startTest();
+            }, 500);
+        }
+
+        // Generate report
+        function generateReport() {
+            const duration = state.metrics.startTime
+                ? ((Date.now() - state.metrics.startTime) / 1000).toFixed(2)
+                : 0;
+
+            log('═══════════════════════════════════', 'info');
+            log('📊 TEST REPORT', 'info');
+            log('═══════════════════════════════════', 'info');
+            log(`Duration: ${duration}s`, 'info');
+            log(`Total Attempted: ${state.metrics.successful + state.metrics.failed}`, 'info');
+            log(`Successful: ${state.metrics.successful}`, 'success');
+            log(`Failed: ${state.metrics.failed}`, 'error');
+            log(`Currently Active: ${state.metrics.active}`, 'info');
+            log(`Events Received: ${state.metrics.eventsReceived}`, 'info');
+
+            const avgLatency = state.metrics.latencySamples.length > 0
+                ? (state.metrics.latencySamples.reduce((a, b) => a + b, 0) / state.metrics.latencySamples.length).toFixed(2)
+                : 0;
+            log(`Average Latency: ${avgLatency}ms`, 'info');
+
+            const maxLatency = state.metrics.latencySamples.length > 0
+                ? Math.max(...state.metrics.latencySamples).toFixed(2)
+                : 0;
+            log(`Max Latency: ${maxLatency}ms`, 'info');
+
+            const minLatency = state.metrics.latencySamples.length > 0
+                ? Math.min(...state.metrics.latencySamples).toFixed(2)
+                : 0;
+            log(`Min Latency: ${minLatency}ms`, 'info');
+
+            log(`Errors: ${state.metrics.errors.length}`, state.metrics.errors.length > 0 ? 'error' : 'success');
+            log('═══════════════════════════════════', 'info');
+
+            // Performance assessment
+            if (state.metrics.successful >= 20 && avgLatency < 100 && state.metrics.failed === 0) {
+                log('✅ EXCELLENT: Performance exceeds requirements!', 'success');
+            } else if (state.metrics.successful >= 15 && avgLatency < 200) {
+                log('✓ GOOD: Performance meets requirements', 'success');
+            } else if (state.metrics.successful >= 10 && avgLatency < 500) {
+                log('⚠ ACCEPTABLE: Performance is marginal', 'warning');
+            } else {
+                log('❌ POOR: Performance below requirements', 'error');
+            }
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            log('WebSocket Load Test Tool initialized', 'success');
+
+            // Check if Pusher loaded
+            if (typeof Pusher === 'undefined') {
+                log('❌ ERROR: Pusher library failed to load from CDN', 'error');
+                log('Please check your internet connection or use offline version', 'error');
+            } else {
+                log(`✅ Pusher library loaded (version ${Pusher.VERSION || 'unknown'})`, 'success');
+            }
+
+            // Initialize chart and error categories
+            initializeChart();
+            updateErrorCategories();
+
+            log('Configure settings above and click "Start Test" or select a preset', 'info');
+        });
+    </script>
+</body>
+</html>

@@ -22,6 +22,7 @@
             detail-user="{{ auth()->user() }}">
         <x-drop-verification />
         <x-winner-modal />
+        <x-websocket-status />
 
         <div id="header" class="hidden lg:flex justify-between uppercase">
             <div>

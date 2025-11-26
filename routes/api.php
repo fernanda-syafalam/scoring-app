@@ -17,3 +17,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+// Lightweight ping endpoint for latency measurement - CRITICAL: bypass all middleware
+Route::match(['get', 'head', 'options'], '/ping', function () {
+    return response()->noContent();
+})->withoutMiddleware(['api', 'throttle:api', \App\Http\Middleware\VerifyCsrfToken::class]);

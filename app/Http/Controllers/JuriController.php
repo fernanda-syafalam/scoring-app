@@ -9,7 +9,7 @@ class JuriController extends Controller
 {
     public function index()
     {
-        if (env("MANAGEMENT_ROLE")){
+        if (config('app_settings.management_role_enabled')){
             $this->authorize("juri");
         }
         $gelangang = UserGelanggang::where('user_id', auth()->user()->id)->first();

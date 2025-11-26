@@ -14,7 +14,7 @@ class PartaiFactory extends Factory
     public function definition()
     {
         return [
-            'id' => $this->faker->numberBetween(0,1000),
+            // Let database auto-increment the ID
             'babak' => $this->faker->randomElement(['Semi-final','Final','Penyisihan','Seperempat']),
             'sudut_merah' => $this->faker->name(),
             'sudut_biru' => $this->faker->name(),

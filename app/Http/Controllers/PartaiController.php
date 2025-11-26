@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePartaiRequest;
+use App\Http\Requests\UpdatePartaiRequest;
 use App\Imports\PartaiImport;
 use App\Models\Gelanggang;
 use App\Models\Partai;
@@ -13,97 +15,58 @@ class PartaiController extends Controller
 {
     public function index()
     {
-        if (env("MANAGEMENT_ROLE")){
+        if (config('app_settings.management_role_enabled')){
             $this->authorize("adtor");
         }
-        $kelas =[
-            (object)[
-                'name'=>'A',
-                'value'=>'A'
-            ],(object)[
-                'name'=>'B',
-                'value'=>'B'
-            ],(object)[
-                'name'=>'C',
-                'value'=>'C'
-            ],(object)[
-                'name'=>'D',
-                'value'=>'D'
-            ],(object)[
-                'name'=>'E',
-                'value'=>'E'
-            ],(object)[
-                'name'=>'F',
-                'value'=>'F'
-            ],(object)[
-                'name'=>'G',
-                'value'=>'G'
-            ],(object)[
-                'name'=>'H',
-                'value'=>'H'
-            ],(object)[
-                'name'=>'I',
-                'value'=>'I'
-            ],
-        ];
-        $partai = Partai::orderBy('id', 'asc');
-        $gelanggang = Gelanggang::orderBy('id', 'asc');
-        $search = \request('search') ?? '';
-        if ($search != ''){
-            $partai->where('id','like', '%'.$search.'%')
-                ->orWhereRaw("LOWER(babak) LIKE ?", ['%' . strtolower($search) . '%'])
-                ->orWhereRaw("LOWER(jenis_kelamin) LIKE ?", ['%' . strtolower($search) . '%'])
-                ->orWhereRaw("LOWER(sudut_biru) LIKE ?", ['%' . strtolower($search) . '%'])
-                ->orWhereRaw("LOWER(sudut_merah) LIKE ?", ['%' . strtolower($search) . '%'])
-                ->orWhereRaw("LOWER(contingen_sudut_biru) LIKE ?", ['%' . strtolower($search) . '%'])
-                ->orWhereRaw("LOWER(contingen_sudut_merah) LIKE ?", ['%' . strtolower($search) . '%']);
 
-        }
+        // Get kelas from config and transform to objects
+        $kelas = collect(config('app_settings.kelas'))->map(function($value) {
+            return (object)['name' => $value, 'value' => $value];
+        })->toArray();
+
+        $search = request('search') ?? '';
+
+        $partais = Partai::with('gelanggang')
+            ->when($search, function($query) use ($search) {
+                return $query->where('id', 'like', "%{$search}%")
+                    ->orWhere('babak', 'ilike', "%{$search}%")
+                    ->orWhere('jenis_kelamin', 'ilike', "%{$search}%")
+                    ->orWhere('sudut_biru', 'ilike', "%{$search}%")
+                    ->orWhere('sudut_merah', 'ilike', "%{$search}%")
+                    ->orWhere('contingen_sudut_biru', 'ilike', "%{$search}%")
+                    ->orWhere('contingen_sudut_merah', 'ilike', "%{$search}%");
+            })
+            ->orderBy('id', 'asc')
+            ->paginate(10);
+
+        $gelanggangs = Gelanggang::orderBy('id', 'asc')->get();
+
         return view('management.pertandingan.pertandingan', [
             'title' => 'pertandingan',
-            'kelas'=>$kelas,
-            'partais'=>$partai->paginate(10),
-            'gelanggangs'=>$gelanggang
+            'kelas' => $kelas,
+            'partais' => $partais,
+            'gelanggangs' => $gelanggangs
         ]);
     }
-    public function create(Request $request)
+    public function create(StorePartaiRequest $request)
     {
-        $validatedData = $request->validate([
-            'id' => 'required|unique:partais',
-            'babak' => 'required',
-            'sudut_biru'=> 'required|max:100|min:3',
-            'sudut_merah'=> 'required|max:100|min:3',
-            'contingen_sudut_biru'=> 'required|max:100|min:3',
-            'contingen_sudut_merah'=> 'required|max:100|min:3',
-            'kelas'=> 'required|max:2',
-            'jenis_kelamin'=> 'required|max:12|min:3',
-        ]);
-        Partai::create($validatedData);
+        Partai::create($request->validated());
 
-
-        return redirect('/management/pertandingan')->with('success', 'Pertandingan Berhasil ditambahkan!');
+        return redirect('/management/pertandingan')->with('success', 'Pertandingan berhasil ditambahkan!');
     }
 
-    public function edit(Request $request,$id)
+    public function edit(UpdatePartaiRequest $request, $id)
     {
-        $validatedData = $request->validate([
-            'babak' => 'required',
-            'sudut_biru'=> 'required|max:100|min:3',
-            'sudut_merah'=> 'required|max:100|min:3',
-            'contingen_sudut_biru'=> 'required|max:100|min:3',
-            'contingen_sudut_merah'=> 'required|max:100|min:3',
-            'kelas'=> 'required|max:2|min:1',
-            'jenis_kelamin'=> 'required',
-        ]);
-        $pertandingan = Partai::findOrFail($id);
-        $pertandingan->update($validatedData);
+        $partai = Partai::findOrFail($id);
+        $partai->update($request->validated());
 
-        return redirect('/management/pertandingan')->with('success', 'Berhasil merubah pertandingan.');
+        return redirect('/management/pertandingan')->with('success', 'Pertandingan berhasil diperbarui!');
     }
+
     public function destroy($id)
     {
         Partai::destroy($id);
-        return redirect('management/pertandingan')->with('success', 'Pertandingan telah dihapus');
+        return redirect('management/pertandingan')->with('success', 'Pertandingan berhasil dihapus!');
     }
 
     public function import(Request $request)

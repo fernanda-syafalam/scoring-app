@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
              'username'=>'admin',
              'active' => true,
              'role_id'=> 1,
-             'password' => Hash::make('admin123'),
+             'password' => Hash::make('password'),
          ]);
         Partai::factory(20)->create();
     }

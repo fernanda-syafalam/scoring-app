@@ -14,8 +14,7 @@ class CreatePartaiTable extends Migration
     public function up()
     {
         Schema::create('partais', function (Blueprint $table) {
-            $table->integer('id')->unsigned();
-            $table->primary('id');
+            $table->id(); // Auto-incrementing primary key
             $table->string('babak');
             $table->foreignId('gelanggang_id')->nullable();
             $table->string('sudut_merah');

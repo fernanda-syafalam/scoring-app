@@ -6,6 +6,7 @@ use App\Models\Gelanggang;
 use App\Models\Partai;
 use App\Models\Pertandingan;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\ToCollection;
 
 class PartaiImport implements ToCollection
@@ -27,22 +28,28 @@ class PartaiImport implements ToCollection
     */
     public function collection(Collection $collection)
     {
-        $allkelas =['A','B','C','D','F','G','H','I','J'];
-        $errorKelas=[];
+        $allkelas = config('app_settings.kelas'); // Use config instead of hardcoded
+        $errorKelas = [];
         $firstIteration = true;
         $data = [];
+
         foreach ($collection as $row){
             if ($firstIteration) {
                 $firstIteration = false;
                 continue;
             }
+
             $kelas = strtoupper($row[6]);
-            if (!array_search($kelas, $allkelas)){
-                $errorKelas[]=intval($row[0]);
+
+            // FIX: Use in_array instead of array_search to avoid 0 index bug
+            if (!in_array($kelas, $allkelas)){
+                $errorKelas[] = intval($row[0]);
             }
+
             if (!$row[1]){
                 continue;
             }
+
             $data[] = [
                 'id' => intval($row[0]),
                 'babak' => $row[1],
@@ -54,27 +61,29 @@ class PartaiImport implements ToCollection
                 'jenis_kelamin' => strtolower($row[7]),
             ];
         }
+
+        // Check for existing IDs
         $existingIds = Partai::whereIn('id', array_column($data, 'id'))->pluck('id')->toArray();
+
+        if (count($errorKelas) > 0) {
+            $errorIdsString = implode(', ', $errorKelas);
+            $this->message = "Data dengan ID: $errorIdsString memiliki Kelas tidak valid!";
+            return;
+        }
+
         if (count($existingIds) > 0) {
             $existingIdsString = implode(', ', $existingIds);
-            $this->message = "Data with IDs: $existingIdsString already exists and was not imported !";
-            if(count($errorKelas)>0){
-                $existingIdsString = implode(', ', $errorKelas);
-                $this->message = "Data with IDs: $existingIdsString Class Not Found !";
-            }
-        } else {
-            foreach ($data as $row) {
-                Partai::create([
-                    'id' => $row['id'],
-                    'babak' => $row['babak'],
-                    'sudut_merah' => $row['sudut_merah'],
-                    'sudut_biru' => $row['sudut_biru'],
-                    'contingen_sudut_merah' => $row['contingen_sudut_merah'],
-                    'contingen_sudut_biru' => $row['contingen_sudut_biru'],
-                    'kelas' => $row['kelas'],
-                    'jenis_kelamin' => $row['jenis_kelamin'],
-                ]);
-            }
+            $this->message = "Data dengan ID: $existingIdsString sudah ada!";
+            return;
         }
+
+        // Use transaction for bulk insert
+        DB::transaction(function () use ($data) {
+            // Use bulk insert for better performance
+            Partai::insert($data);
+
+            // Reset sequence to prevent duplicate key errors on next insert
+            DB::statement("SELECT setval(pg_get_serial_sequence('partais', 'id'), COALESCE(MAX(id), 1)) FROM partais;");
+        });
     }
 }

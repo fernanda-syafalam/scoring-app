@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\UserGelanggang;
 use Illuminate\Http\Request;
 
-class KetuaPertandingaController extends Controller
+class KetuaPertandinganController extends Controller
 {
     public function index()
     {
-        if (env("MANAGEMENT_ROLE")){
+        if (config('app_settings.management_role_enabled')){
             $this->authorize("ketua");
         }
         $gelangang = UserGelanggang::where('user_id', auth()->user()->id)->first();

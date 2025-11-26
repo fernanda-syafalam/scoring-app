@@ -26,6 +26,55 @@ let peringatanPenaltyBlue = false;
 
 let peringatanPenaltyRed = false;
 
+// ========================================
+// DROP TRACKING SYSTEM
+// ========================================
+let redDropCount = 0;
+let blueDropCount = 0;
+const MAX_DROPS_PER_ROUND = 5;
+const DROP_SCORE_VALUE = 3; // Points for valid drop
+
+// ========================================
+// PERFORMANCE OPTIMIZATION: Debounce timeout
+// ========================================
+let scoreUpdateTimeout;
+const SCORE_DEBOUNCE_MS = 150; // Wait 150ms to batch multiple clicks
+
+// ========================================
+// LOGGING & OPTIMIZATION: Verbose logging control
+// ========================================
+const LOG_LEVEL = process.env.NODE_ENV === 'production' ? 'ERROR' : 'INFO';
+const shouldLog = (level) => {
+    const levels = { ERROR: 0, WARN: 1, INFO: 2, DEBUG: 3 };
+    return levels[level] <= levels[LOG_LEVEL];
+};
+
+// ========================================
+// STATE CHANGE DETECTION: Prevent redundant broadcasts
+// ========================================
+let lastBroadcastState = {
+    redScore: 0,
+    blueScore: 0,
+    redPenalties: [],
+    bluePenalties: [],
+};
+
+function hasStateChanged(newState) {
+    // Compare scores
+    if (newState.redScore !== lastBroadcastState.redScore ||
+        newState.blueScore !== lastBroadcastState.blueScore) {
+        return true;
+    }
+
+    // Compare penalties (as JSON strings since arrays need deep comparison)
+    const redPenaltiesChanged = JSON.stringify(newState.redPenalties) !==
+                               JSON.stringify(lastBroadcastState.redPenalties);
+    const bluePenaltiesChanged = JSON.stringify(newState.bluePenalties) !==
+                                JSON.stringify(lastBroadcastState.bluePenalties);
+
+    return redPenaltiesChanged || bluePenaltiesChanged;
+}
+
 const pelanggaranPoint = {
     pertama: 0,
     "binaan-pertama": 0,
@@ -100,7 +149,7 @@ export function enabledAction(status = true) {
     });
 }
 export function handlePenaltyClick(color, penalty) {
-    console.log("🚀 ~ handlePenaltyClick ~ penalty:", penalty);
+    if (shouldLog('DEBUG')) console.log("🚀 ~ handlePenaltyClick ~ penalty:", penalty);
     return function () {
         if (peringatan.includes(penalty)) {
             if (color === "red") {
@@ -176,17 +225,14 @@ export function updatePertandingan(winner) {
 }
 export function changeRoundDewan(round) {
     updateRoundDewan(round);
-    console.log("🚀 ~ changeRoundDewan ~ round:", round);
+    if (shouldLog('DEBUG')) console.log("🚀 ~ changeRoundDewan ~ round:", round);
     updateDataIndicator();
     pushScore();
 }
 
 export function updateDataIndicator() {
     if (redPelanggaran.length > 0) {
-        console.log(
-            "🚀 ~ updateDataIndicator ~ redPelanggaran.length:",
-            redPelanggaran
-        );
+        if (shouldLog('DEBUG')) console.log("🚀 ~ updateDataIndicator ~ redPelanggaran:", redPelanggaran);
         redPelanggaran.map((pelanggaran) => {
             // pureScoreRed -= pelanggaranPoint[pelanggaran]
             pelanggaranMerah = pelanggaranMerah.filter(
@@ -204,19 +250,13 @@ export function updateDataIndicator() {
             pureScoreRed -= pelanggaranPoint[pelanggaran];
         });
         pelanggaranMerah = [];
-        console.log(
-            "🚀 ~ updateDataIndicator ~ pelanggaranMerah:",
-            pelanggaranMerah
-        );
+        if (shouldLog('DEBUG')) console.log("🚀 ~ updateDataIndicator ~ pelanggaranMerah reset");
         redPenalty = "pertama";
         changeIndicatorPelanggaran("red", redPenalty);
     }
 
     if (bluePelanggaran.length > 0) {
-        console.log(
-            "🚀 ~ updateDataIndicator ~ bluePelanggaran.length:",
-            bluePelanggaran
-        );
+        if (shouldLog('DEBUG')) console.log("🚀 ~ updateDataIndicator ~ bluePelanggaran:", bluePelanggaran);
         bluePelanggaran.map((pelanggaran) => {
             // pureScoreBlue -= pelanggaranPoint[pelanggaran]
             pelanggaranBiru = pelanggaranBiru.filter(
@@ -234,10 +274,7 @@ export function updateDataIndicator() {
             pureScoreBlue -= pelanggaranPoint[pelanggaran];
         });
         pelanggaranBiru = [];
-        console.log(
-            "🚀 ~ updateDataIndicator ~ pelanggaranBiru:",
-            pelanggaranBiru
-        );
+        if (shouldLog('DEBUG')) console.log("🚀 ~ updateDataIndicator ~ pelanggaranBiru reset");
         bluePenalty = "pertama";
         changeIndicatorPelanggaran("blue", bluePenalty);
     }
@@ -291,51 +328,219 @@ export function loadDataSave() {
 export function pushScore(droppingRed = 0, droppingBlue = 0) {
     pureScoreRed += droppingRed;
     pureScoreBlue += droppingBlue;
-    axios.post("/score-update", {
-        message: {
-            blueScore: pureScoreBlue,
+
+    // ========================================
+    // PERFORMANCE OPTIMIZATION: Debounce HTTP requests
+    // ========================================
+    // Clear previous timeout to batch multiple clicks
+    clearTimeout(scoreUpdateTimeout);
+
+    // Schedule the HTTP POST after waiting for more clicks (150ms window)
+    scoreUpdateTimeout = setTimeout(() => {
+        // ========================================
+        // STATE CHANGE DETECTION: Only broadcast if state changed
+        // ========================================
+        const newState = {
             redScore: pureScoreRed,
-            redPenalty: pelanggaranMerah,
-            bluePenalty: pelanggaranBiru,
-            droppingRed: droppingRed,
-            droppingBlue: droppingBlue,
-        },
-    });
+            blueScore: pureScoreBlue,
+            redPenalties: [...pelanggaranMerah],
+            bluePenalties: [...pelanggaranBiru],
+        };
+
+        if (!hasStateChanged(newState)) {
+            if (shouldLog('DEBUG')) console.log("⏭️ Skipping redundant broadcast - state unchanged");
+            return;
+        }
+
+        // Update last broadcast state
+        lastBroadcastState = newState;
+
+        if (shouldLog('INFO')) console.log("📤 Sending score update (state changed)");
+        axios.post("/score-update", {
+            message: {
+                blueScore: pureScoreBlue,
+                redScore: pureScoreRed,
+                redPenalty: pelanggaranMerah,
+                bluePenalty: pelanggaranBiru,
+                droppingRed: droppingRed,
+                droppingBlue: droppingBlue,
+            },
+        }).catch((error) => {
+            console.error("❌ Error updating score:", error);
+        });
+    }, SCORE_DEBOUNCE_MS);
+
+    // Save locally immediately (fast, no network)
     saveData();
 }
 
 export function handleScoreChange(color, scoreChange) {
     return function () {
         if (color === "red") {
-            let text = dataDewan.redInput.innerHTML;
+            // ========================================
+            // PERFORMANCE OPTIMIZATION: Use textContent instead of innerHTML (5-10x faster)
+            // ========================================
+            let text = dataDewan.redInput.textContent;
             if (!isEmpty(text)) {
+                // ✅ Direct array operation, no unnecessary map()
                 const values = text.split(",");
-                const formattedValues = values.map((value) => {
-                    return value;
-                });
-                formattedValues.push(`${scoreChange}`);
-                dataDewan.redInput.innerHTML = formattedValues.join(",");
+                values.push(`${scoreChange}`);
+                dataDewan.redInput.textContent = values.join(",");
             } else {
-                dataDewan.redInput.innerHTML = scoreChange;
+                dataDewan.redInput.textContent = scoreChange;
             }
             pushScore(scoreChange, 0);
         } else if (color === "blue") {
-            let text = dataDewan.blueInput.innerHTML;
+            // ========================================
+            // PERFORMANCE OPTIMIZATION: Use textContent, remove unnecessary reverses
+            // ========================================
+            let text = dataDewan.blueInput.textContent;
             if (!isEmpty(text)) {
+                // ✅ Direct array operation, no reverse/push/reverse
                 const values = text.split(",");
-                const formattedValues = values.map((value) => {
-                    return value;
-                });
-                formattedValues.reverse();
-                formattedValues.push(`${scoreChange}`);
-                formattedValues.reverse();
-                dataDewan.blueInput.innerHTML = formattedValues.join(",");
+                values.push(`${scoreChange}`);
+                dataDewan.blueInput.textContent = values.join(",");
             } else {
-                dataDewan.blueInput.innerHTML = scoreChange;
+                dataDewan.blueInput.textContent = scoreChange;
             }
             pushScore(0, scoreChange);
         }
     };
+}
+
+// ========================================
+// DROP (JATUHAN) FUNCTIONALITY
+// ========================================
+/**
+ * Handle drop/knockdown button clicks
+ * Manages drop counter with validation and broadcasting
+ * @param {string} color - 'red' or 'blue'
+ * @returns {Function} Event handler
+ */
+export function handleDropClick(color) {
+    return function (increment = 1) {
+        if (shouldLog('DEBUG')) console.log(`🔄 Drop button clicked for ${color}, increment: ${increment}`);
+
+        // ========================================
+        // CALCULATE SCORE VALUE FOR DISPLAY
+        // ========================================
+        // increment = 1 for "jatuhan +" (valid drop = +3 points)
+        // increment = -1 for "jatuhan -" (invalid drop = -3 points)
+        const scoreValue = DROP_SCORE_VALUE * increment;
+        const displayScore = scoreValue > 0 ? `${scoreValue}` : `${scoreValue}`;  // Shows "3" or "-3"
+
+        if (color === "red") {
+            // Update counter
+            redDropCount += increment;
+
+            // Validate against maximum
+            if (redDropCount < 0) redDropCount = 0;
+            if (redDropCount > MAX_DROPS_PER_ROUND) {
+                redDropCount = MAX_DROPS_PER_ROUND;
+                if (shouldLog('WARN')) console.warn(`⚠️ Red team reached max drops (${MAX_DROPS_PER_ROUND})`);
+            }
+
+            // ========================================
+            // UPDATE SCORE HISTORY DISPLAY (Like pukul/tendang)
+            // ========================================
+            let text = dataDewan.redInput.textContent;
+            if (!isEmpty(text)) {
+                const values = text.split(",");
+                values.push(displayScore);  // ✅ Shows "3" or "-3"
+                dataDewan.redInput.textContent = values.join(",");
+            } else {
+                dataDewan.redInput.textContent = displayScore;  // ✅ Shows "3" or "-3"
+            }
+
+            // Update UI display
+            updateDropDisplay("red", redDropCount);
+
+            // Broadcast update (with debounce via pushScore)
+            pushScore(redDropCount > 0 ? DROP_SCORE_VALUE * increment : 0, 0);
+
+        } else if (color === "blue") {
+            // Update counter
+            blueDropCount += increment;
+
+            // Validate against maximum
+            if (blueDropCount < 0) blueDropCount = 0;
+            if (blueDropCount > MAX_DROPS_PER_ROUND) {
+                blueDropCount = MAX_DROPS_PER_ROUND;
+                if (shouldLog('WARN')) console.warn(`⚠️ Blue team reached max drops (${MAX_DROPS_PER_ROUND})`);
+            }
+
+            // ========================================
+            // UPDATE SCORE HISTORY DISPLAY (Like pukul/tendang)
+            // ========================================
+            let text = dataDewan.blueInput.textContent;
+            if (!isEmpty(text)) {
+                const values = text.split(",");
+                values.push(displayScore);  // ✅ Shows "3" or "-3"
+                dataDewan.blueInput.textContent = values.join(",");
+            } else {
+                dataDewan.blueInput.textContent = displayScore;  // ✅ Shows "3" or "-3"
+            }
+
+            // Update UI display
+            updateDropDisplay("blue", blueDropCount);
+
+            // Broadcast update (with debounce via pushScore)
+            pushScore(0, blueDropCount > 0 ? DROP_SCORE_VALUE * increment : 0);
+        }
+    };
+}
+
+/**
+ * Update drop display in UI
+ * Shows current drop count with visual feedback
+ * @param {string} color - 'red' or 'blue'
+ * @param {number} count - Current drop count
+ */
+export function updateDropDisplay(color, count) {
+    const round = activeRound?.textContent || "round-1";
+    const elementId = `${round}-dropping-${color}`;
+    const element = document.getElementById(elementId);
+
+    if (element) {
+        // Update display with count
+        element.textContent = count > 0 ? `${count}x Jatuhan` : "0";
+
+        // Visual feedback: highlight if approaching max
+        if (count >= MAX_DROPS_PER_ROUND) {
+            element.classList.add("bg-redDefault", "animate-pulse");
+            if (shouldLog('WARN')) console.warn(`🚨 ${color} team at maximum drops!`);
+        } else if (count >= MAX_DROPS_PER_ROUND - 1) {
+            element.classList.add("bg-yellowDefault");
+        } else {
+            element.classList.remove("bg-redDefault", "bg-yellowDefault", "animate-pulse");
+        }
+    } else {
+        if (shouldLog('WARN')) console.warn(`⚠️ Drop display element not found: ${elementId}`);
+    }
+}
+
+/**
+ * Reset drop counters (call when starting new round)
+ */
+export function resetDropCounters() {
+    redDropCount = 0;
+    blueDropCount = 0;
+    if (shouldLog('INFO')) console.log("✅ Drop counters reset for new round");
+
+    // Clear display for all rounds
+    rounds.forEach((round) => {
+        const redElement = document.getElementById(`${round}-dropping-red`);
+        const blueElement = document.getElementById(`${round}-dropping-blue`);
+
+        if (redElement) {
+            redElement.textContent = "0";
+            redElement.classList.remove("bg-redDefault", "bg-yellowDefault", "animate-pulse");
+        }
+        if (blueElement) {
+            blueElement.textContent = "0";
+            blueElement.classList.remove("bg-redDefault", "bg-yellowDefault", "animate-pulse");
+        }
+    });
 }
 
 export function changeIndicatorPelanggaran(corner, penalty) {

@@ -1,3 +1,11 @@
+/**
+ * Dewan (Council/Referee) Scoreboard Manager
+ * Handles match scoring, penalties, and referee controls
+ *
+ * @fileoverview Manages the dewan scoreboard interface for live match scoring
+ * @version 2.0.0
+ */
+
 import {
     activeRound,
     channelOperator,
@@ -6,164 +14,375 @@ import {
     userData,
 } from "./library/ScoreFunc";
 
-require("./bootstrap");
 import {
     cekWinner,
     changeRoundDewan,
     clearIndicator,
     enabledAction,
+    handleDropClick,
     handlePenaltyClick,
     handleScoreChange,
     loadDataSave,
+    resetDropCounters,
     saveData,
     updateDataScore,
     updatePertandingan,
 } from "./library/DewanFunc";
-const teguranMerahPertama = document.getElementById("teguran-merah-pertama");
-const binaanMerahPertama = document.getElementById("binaan-merah-pertama");
-const peringatanMerahPertama = document.getElementById(
-    "peringatan-merah-pertama"
-);
-const teguranMerahKedua = document.getElementById("teguran-merah-kedua");
-const binaanMerahKedua = document.getElementById("binaan-merah-kedua");
-const peringatanMerahKedua = document.getElementById("peringatan-merah-kedua");
-const peringatanMerahKetiga = document.getElementById(
-    "peringatan-merah-ketiga"
-);
-const teguranBiruPertama = document.getElementById("teguran-biru-pertama");
-const binaanBiruPertama = document.getElementById("binaan-biru-pertama");
-const peringatanBiruPertama = document.getElementById(
-    "peringatan-biru-pertama"
-);
-const teguranBiruKedua = document.getElementById("teguran-biru-kedua");
-const binaanBiruKedua = document.getElementById("binaan-biru-kedua");
-const peringatanBiruKedua = document.getElementById("peringatan-biru-kedua");
-const peringatanBiruKetiga = document.getElementById("peringatan-biru-ketiga");
-const jatuhanMerahSah = document.getElementById("jatuhan-merah-plus");
-const jatuhanMerahTidakSah = document.getElementById("jatuhan-merah-minus");
-const jatuhanBiruSah = document.getElementById("jatuhan-biru-plus");
-const jatuhanBiruTidakSah = document.getElementById("jatuhan-biru-minus");
-const diskMerah = document.getElementById("disk-merah");
-const diskBiru = document.getElementById("disk-biru");
-enabledAction(true);
-// localStorage.clear();
-if (localStorage.getItem("dataDewan")) {
-    loadDataSave();
-}
 
-channelUpdateScore.listen(`.updateScore.${userData.gelanggang_id}`, (event) => {
-    updateDataScore(event);
-    // console.log("🚀 ~ channelUpdateScore.listen ~ event:", event);
-    setTimeout(() => {
-        saveData();
-    }, 200);
-});
-channelOperator.listen(`.operator.${userData.gelanggang_id}`, (event) => {
-    updateDataDewan(event);
-});
+require("./bootstrap");
 
-teguranMerahPertama.addEventListener(
-    "click",
-    handlePenaltyClick("red", "teguran-pertama")
-);
-teguranMerahKedua.addEventListener(
-    "click",
-    handlePenaltyClick("red", "teguran-kedua")
-);
-binaanMerahPertama.addEventListener(
-    "click",
-    handlePenaltyClick("red", "binaan-pertama")
-);
-binaanMerahKedua.addEventListener(
-    "click",
-    handlePenaltyClick("red", "binaan-kedua")
-);
-peringatanMerahPertama.addEventListener(
-    "click",
-    handlePenaltyClick("red", "peringatan-pertama")
-);
-peringatanMerahKedua.addEventListener(
-    "click",
-    handlePenaltyClick("red", "peringatan-kedua")
-);
-peringatanMerahKetiga.addEventListener(
-    "click",
-    handlePenaltyClick("red", "peringatan-ketiga")
-);
-peringatanMerahKetiga.addEventListener("click", function () {
-    setTimeout(() => {
-        updatePertandingan("biru");
-    }, 200);
-});
+/**
+ * Configuration Constants
+ */
+const CONFIG = {
+    CORNERS: {
+        RED: 'red',
+        BLUE: 'blue'
+    },
+    PENALTIES: {
+        'teguran-pertama': 'Teguran Pertama',
+        'teguran-kedua': 'Teguran Kedua',
+        'binaan-pertama': 'Binaan Pertama',
+        'binaan-kedua': 'Binaan Kedua',
+        'peringatan-pertama': 'Peringatan Pertama',
+        'peringatan-kedua': 'Peringatan Kedua',
+        'peringatan-ketiga': 'Peringatan Ketiga'
+    },
+    TIMEOUTS: {
+        SAVE_DELAY: 200,
+        BROADCAST_DELAY: 200
+    },
+    STORAGE: {
+        DEWAN_DATA: 'dataDewan'
+    },
+    DROP_SCORES: {
+        VALID: 3,
+        INVALID: -3
+    }
+};
 
-teguranBiruPertama.addEventListener(
-    "click",
-    handlePenaltyClick("blue", "teguran-pertama")
-);
-teguranBiruKedua.addEventListener(
-    "click",
-    handlePenaltyClick("blue", "teguran-kedua")
-);
-binaanBiruPertama.addEventListener(
-    "click",
-    handlePenaltyClick("blue", "binaan-pertama")
-);
-binaanBiruKedua.addEventListener(
-    "click",
-    handlePenaltyClick("blue", "binaan-kedua")
-);
-peringatanBiruPertama.addEventListener(
-    "click",
-    handlePenaltyClick("blue", "peringatan-pertama")
-);
-peringatanBiruKedua.addEventListener(
-    "click",
-    handlePenaltyClick("blue", "peringatan-kedua")
-);
-peringatanBiruKetiga.addEventListener("click", function () {
-    setTimeout(() => {
-        updatePertandingan("merah");
-    }, 200);
-});
+/**
+ * Button Configurations
+ * Maps button IDs to their corresponding handlers
+ */
+const BUTTON_CONFIG = [
+    // RED CORNER PENALTIES
+    { id: 'teguran-merah-pertama', corner: CONFIG.CORNERS.RED, type: 'teguran-pertama', action: 'penalty' },
+    { id: 'teguran-merah-kedua', corner: CONFIG.CORNERS.RED, type: 'teguran-kedua', action: 'penalty' },
+    { id: 'binaan-merah-pertama', corner: CONFIG.CORNERS.RED, type: 'binaan-pertama', action: 'penalty' },
+    { id: 'binaan-merah-kedua', corner: CONFIG.CORNERS.RED, type: 'binaan-kedua', action: 'penalty' },
+    { id: 'peringatan-merah-pertama', corner: CONFIG.CORNERS.RED, type: 'peringatan-pertama', action: 'penalty' },
+    { id: 'peringatan-merah-kedua', corner: CONFIG.CORNERS.RED, type: 'peringatan-kedua', action: 'penalty' },
+    { id: 'peringatan-merah-ketiga', corner: CONFIG.CORNERS.RED, type: 'peringatan-ketiga', action: 'disqualify', opponent: CONFIG.CORNERS.BLUE },
 
-jatuhanMerahSah.addEventListener("click", handleScoreChange("red", 3));
-jatuhanMerahTidakSah.addEventListener("click", handleScoreChange("red", -3));
+    // BLUE CORNER PENALTIES
+    { id: 'teguran-biru-pertama', corner: CONFIG.CORNERS.BLUE, type: 'teguran-pertama', action: 'penalty' },
+    { id: 'teguran-biru-kedua', corner: CONFIG.CORNERS.BLUE, type: 'teguran-kedua', action: 'penalty' },
+    { id: 'binaan-biru-pertama', corner: CONFIG.CORNERS.BLUE, type: 'binaan-pertama', action: 'penalty' },
+    { id: 'binaan-biru-kedua', corner: CONFIG.CORNERS.BLUE, type: 'binaan-kedua', action: 'penalty' },
+    { id: 'peringatan-biru-pertama', corner: CONFIG.CORNERS.BLUE, type: 'peringatan-pertama', action: 'penalty' },
+    { id: 'peringatan-biru-kedua', corner: CONFIG.CORNERS.BLUE, type: 'peringatan-kedua', action: 'penalty' },
+    { id: 'peringatan-biru-ketiga', corner: CONFIG.CORNERS.BLUE, type: 'peringatan-ketiga', action: 'disqualify', opponent: CONFIG.CORNERS.RED },
 
-jatuhanBiruSah.addEventListener("click", handleScoreChange("blue", 3));
-jatuhanBiruTidakSah.addEventListener("click", handleScoreChange("blue", -3));
-diskMerah.addEventListener("click", disqualification("biru"));
-diskBiru.addEventListener("click", disqualification("merah"));
+    // DROP SCORES
+    { id: 'jatuhan-merah-plus', corner: CONFIG.CORNERS.RED, score: CONFIG.DROP_SCORES.VALID, action: 'score' },
+    { id: 'jatuhan-merah-minus', corner: CONFIG.CORNERS.RED, score: CONFIG.DROP_SCORES.INVALID, action: 'score' },
+    { id: 'jatuhan-biru-plus', corner: CONFIG.CORNERS.BLUE, score: CONFIG.DROP_SCORES.VALID, action: 'score' },
+    { id: 'jatuhan-biru-minus', corner: CONFIG.CORNERS.BLUE, score: CONFIG.DROP_SCORES.INVALID, action: 'score' },
 
-function disqualification(corner) {
-    return function () {
-        updatePertandingan(corner);
-    };
-}
-enabledAction();
+    // DISQUALIFICATIONS
+    { id: 'disk-merah', corner: CONFIG.CORNERS.RED, action: 'disqualify', opponent: CONFIG.CORNERS.BLUE },
+    { id: 'disk-biru', corner: CONFIG.CORNERS.BLUE, action: 'disqualify', opponent: CONFIG.CORNERS.RED }
+];
 
-function updateDataDewan(e) {
-    switch (e.action) {
-        case "start":
-            saveData();
-            break;
-        case "finish":
-            localStorage.clear();
-            cekWinner();
-            break;
-        case "round":
-            enabledAction(false);
-            clearIndicator();
-            changeRoundDewan(e.activeRound);
-            break;
-        case "pause":
-            enabledAction(false);
-            break;
-        case "play":
-            enabledAction();
-            break;
-        case "reset":
-            localStorage.clear();
-            location.reload();
-            break;
+/**
+ * Utility Functions
+ */
+
+/**
+ * Safely retrieve DOM element with error handling
+ * @param {string} id - Element ID
+ * @returns {HTMLElement|null} DOM element or null if not found
+ */
+function getElement(id) {
+    try {
+        const element = document.getElementById(id);
+        if (!element) {
+            console.warn(`⚠️ Element not found: ${id}`);
+            return null;
+        }
+        return element;
+    } catch (error) {
+        console.error(`❌ Error getting element '${id}':`, error);
+        return null;
     }
 }
+
+/**
+ * Safely attach event listener with error handling
+ * @param {HTMLElement} element - Target element
+ * @param {string} eventType - Event type (e.g., 'click')
+ * @param {Function} handler - Event handler function
+ * @returns {boolean} Success status
+ */
+function attachListener(element, eventType, handler) {
+    try {
+        if (!element) return false;
+        element.addEventListener(eventType, handler);
+        return true;
+    } catch (error) {
+        console.error(`❌ Error attaching ${eventType} listener:`, error);
+        return false;
+    }
+}
+
+/**
+ * Debounced save function
+ * @type {Function}
+ */
+let saveTimeout;
+function debouncedSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        saveData();
+    }, CONFIG.TIMEOUTS.SAVE_DELAY);
+}
+
+/**
+ * Channel & Event Listeners
+ */
+
+/**
+ * Handle score updates from other judges
+ */
+try {
+    channelUpdateScore.listen(`.updateScore.${userData.gelanggang_id}`, (event) => {
+        try {
+            updateDataScore(event);
+            debouncedSave();
+        } catch (error) {
+            console.error('❌ Error updating score:', error);
+        }
+    });
+} catch (error) {
+    console.error('❌ Error setting up score channel:', error);
+}
+
+/**
+ * Handle operator actions (start, pause, reset, etc.)
+ */
+try {
+    channelOperator.listen(`.operator.${userData.gelanggang_id}`, (event) => {
+        try {
+            handleOperatorAction(event);
+        } catch (error) {
+            console.error('❌ Error handling operator action:', error);
+        }
+    });
+} catch (error) {
+    console.error('❌ Error setting up operator channel:', error);
+}
+
+/**
+ * Button Event Handlers
+ */
+
+/**
+ * Initialize all button listeners based on configuration
+ */
+function initializeButtons() {
+    let successCount = 0;
+    let failureCount = 0;
+
+    BUTTON_CONFIG.forEach((config) => {
+        const element = getElement(config.id);
+        if (!element) {
+            failureCount++;
+            return;
+        }
+
+        try {
+            const handler = getHandlerForConfig(config);
+            if (attachListener(element, 'click', handler)) {
+                successCount++;
+            } else {
+                failureCount++;
+            }
+        } catch (error) {
+            console.error(`❌ Error initializing button ${config.id}:`, error);
+            failureCount++;
+        }
+    });
+
+    console.log(`✅ Buttons initialized: ${successCount} succeeded, ${failureCount} failed`);
+}
+
+/**
+ * Get appropriate handler based on button configuration
+ * @param {Object} config - Button configuration
+ * @returns {Function} Event handler function
+ */
+function getHandlerForConfig(config) {
+    switch (config.action) {
+        case 'penalty':
+            return () => handlePenaltyClick(config.corner, config.type)();
+
+        case 'score':
+            // ========================================
+            // PERFORMANCE & FEATURE: Distinguish drops from regular scores
+            // ========================================
+            // Drop buttons have score values of ±3 (CONFIG.DROP_SCORES.VALID/INVALID)
+            // Regular scores are ±1, ±2
+            if (Math.abs(config.score) === 3) {
+                // This is a DROP button - use optimized drop handler
+                const increment = config.score > 0 ? 1 : -1;
+                return () => handleDropClick(config.corner)(increment);
+            } else {
+                // Regular score button - use standard handler
+                return () => handleScoreChange(config.corner, config.score)();
+            }
+
+        case 'disqualify':
+            return () => handleDisqualification(config.opponent);
+
+        default:
+            console.warn(`⚠️ Unknown action: ${config.action}`);
+            return () => {};
+    }
+}
+
+/**
+ * Handle disqualification action
+ * @param {string} opponent - Opponent corner (red or blue)
+ */
+function handleDisqualification(opponent) {
+    try {
+        setTimeout(() => {
+            updatePertandingan(opponent);
+        }, CONFIG.TIMEOUTS.BROADCAST_DELAY);
+    } catch (error) {
+        console.error('❌ Error handling disqualification:', error);
+    }
+}
+
+/**
+ * Operator Action Handler
+ */
+
+/**
+ * Handle broadcast actions from operator
+ * @param {Object} event - Operator action event
+ * @throws {Error} If event is invalid
+ */
+function handleOperatorAction(event) {
+    // Input validation
+    if (!event || typeof event !== 'object') {
+        console.error('❌ Invalid event received:', event);
+        return;
+    }
+
+    const action = event.action?.toLowerCase?.();
+    if (!action) {
+        console.warn('⚠️ Event missing action property');
+        return;
+    }
+
+    // Action handlers map
+    const actionHandlers = {
+        'start': () => {
+            console.log('📍 Match started');
+            saveData();
+        },
+        'finish': () => {
+            console.log('✅ Match finished');
+            localStorage.removeItem(CONFIG.STORAGE.DEWAN_DATA);
+            cekWinner();
+        },
+        'round': () => {
+            if (!event.activeRound) {
+                console.warn('⚠️ Round change missing activeRound');
+                return;
+            }
+            console.log(`📍 Round changed to: ${event.activeRound}`);
+            enabledAction(false);
+            clearIndicator();
+            resetDropCounters();  // ✅ Reset drop tracking for new round
+            changeRoundDewan(event.activeRound);
+        },
+        'pause': () => {
+            console.log('⏸️ Match paused');
+            enabledAction(false);
+        },
+        'play': () => {
+            console.log('▶️ Match resumed');
+            enabledAction(true);
+        },
+        'reset': () => {
+            console.log('🔄 Match reset');
+            localStorage.removeItem(CONFIG.STORAGE.DEWAN_DATA);
+            location.reload();
+        }
+    };
+
+    // Execute handler or log unknown action
+    const handler = actionHandlers[action];
+    if (handler) {
+        try {
+            handler();
+        } catch (error) {
+            console.error(`❌ Error executing action '${action}':`, error);
+        }
+    } else {
+        console.warn(`⚠️ Unknown operator action: ${action}`);
+    }
+}
+
+/**
+ * Initialization
+ */
+
+/**
+ * Initialize the dewan scoreboard
+ */
+function initDewanScoreboard() {
+    try {
+        console.log('🚀 Initializing Dewan Scoreboard...');
+
+        // Enable actions by default
+        enabledAction(true);
+
+        // Restore previously saved data if available
+        if (localStorage.getItem(CONFIG.STORAGE.DEWAN_DATA)) {
+            console.log('📦 Restoring saved data');
+            loadDataSave();
+        }
+
+        // Initialize all button listeners
+        initializeButtons();
+
+        console.log('✅ Dewan Scoreboard initialized successfully');
+    } catch (error) {
+        console.error('❌ Fatal error initializing dewan scoreboard:', error);
+    }
+}
+
+/**
+ * Start application when DOM is ready
+ */
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDewanScoreboard);
+} else {
+    initDewanScoreboard();
+}
+
+/**
+ * Export for testing and external access
+ */
+export {
+    initDewanScoreboard,
+    handleOperatorAction,
+    handleDisqualification,
+    getHandlerForConfig,
+    CONFIG,
+    BUTTON_CONFIG
+};

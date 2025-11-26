@@ -69,6 +69,10 @@ class WinnerEvent implements ShouldBroadcast
     private function getGelanggangId($user)
     {
         $gelanggang = UserGelanggang::where('user_id', $user->id)->first();
+        if (!$gelanggang) {
+            throw new \Exception("User does not have a gelanggang assignment.");
+        }
+
         return $gelanggang->gelanggang_id;
     }
 }

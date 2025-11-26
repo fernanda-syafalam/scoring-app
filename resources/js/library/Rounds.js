@@ -4,4 +4,4 @@ export const roundsElement = {
     "round-3": document.getElementById("round-3"),
 };
 
-export const countMinimumToStart = 5;
+export const countMinimumToStart = 1;
