@@ -139,11 +139,11 @@
             <div class="flex w-[70%] justify-between">
                 <button type="button" id="jatuhan-biru-plus"
                     class="mb-2 mr-2 flex inline-flex w-[25%] items-center items-center justify-center rounded-[14px] bg-blueDefault px-5 py-2.5 text-center text-sm shadow-inset-custom disabled:cursor-not-allowed">
-                    <p class="text-lg font-bold text-whiteDefault">JATUHAN +</p>
+                    <p class="text-lg font-bold text-whiteDefault">DROP +</p>
                 </button>
                 <button type="button" id="jatuhan-biru-minus"
                     class="mb-2 mr-2 flex inline-flex w-[25%] items-center items-center justify-center rounded-[14px] bg-blueDefault px-5 py-2.5 text-center text-sm shadow-inset-custom disabled:cursor-not-allowed">
-                    <p class="text-lg font-bold text-whiteDefault">JATUHAN -</p>
+                    <p class="text-lg font-bold text-whiteDefault">DROP -</p>
                 </button>
                 <button type="button" id="peringatan-biru-ketiga"
                     class="mb-2 mr-2 flex inline-flex w-[50%] items-center justify-center gap-4 rounded-[14px] bg-grayDefault px-5 py-2.5 text-center text-sm shadow-inset-custom disabled:cursor-not-allowed">
@@ -151,17 +151,16 @@
                     <img src="{{ asset('images/sudut-biru/peringatan.png') }}" width="40" height="20" alt="peringatan pertama">
                 </button>
             </div>
-
-            <div class="flex w-[70%] justify-between">
-                <button type="button" id="disk-biru"
-                    class="focus-red-button mb-2 mr-2 flex inline-flex w-[100%] items-center items-center justify-center rounded-[14px] bg-blueDefault px-5 py-2.5 text-center text-sm shadow-inset-custom disabled:cursor-not-allowed">
-                    <p class="text-lg font-bold text-whiteDefault">DISKULIFIKASI</p>
-                </button>
-            </div>
             <div class="flex w-[70%] justify-between">
                 <button type="button" id="popup-biru"
                     class="mb-2 mr-2 flex inline-flex w-[100%] items-center items-center justify-center rounded-[14px] bg-blueDefault px-5 py-2.5 text-center text-sm shadow-inset-custom hover:bg-blueDefault disabled:cursor-not-allowed">
-                    <p class="text-lg font-bold text-whiteDefault">MULAI PENGAMBILAN KEPUTUSAN</p>
+                    <p class="text-lg font-bold text-whiteDefault">CALL</p>
+                </button>
+            </div>
+            <div class="flex w-[70%] justify-between">
+                <button type="button" id="disk-biru"
+                    class="focus-red-button mb-2 mr-2 flex inline-flex w-[100%] items-center items-center justify-center rounded-[14px] bg-blueDefault px-5 py-2.5 text-center text-sm shadow-inset-custom disabled:cursor-not-allowed">
+                    <p class="text-lg font-bold text-whiteDefault">WMP</p>
                 </button>
             </div>
         </div>
@@ -210,25 +209,24 @@
                 </button>
                 <button type="button" id="jatuhan-merah-minus"
                     class="mb-2 mr-2 flex inline-flex w-[25%] items-center items-center justify-center rounded-[14px] bg-redDefault px-5 py-2.5 text-center text-sm shadow-inset-custom disabled:cursor-not-allowed">
-                    <p class="text-lg font-bold text-whiteDefault">JATUHAN -</p>
+                    <p class="text-lg font-bold text-whiteDefault">DROP -</p>
                 </button>
                 <button type="button" id="jatuhan-merah-plus"
                     class="mb-2 mr-2 flex inline-flex w-[25%] items-center items-center justify-center rounded-[14px] bg-redDefault px-5 py-2.5 text-center text-sm shadow-inset-custom disabled:cursor-not-allowed">
-                    <p class="text-lg font-bold text-whiteDefault">JATUHAN +</p>
+                    <p class="text-lg font-bold text-whiteDefault">DROP +</p>
                 </button>
 
-            </div>
-
-            <div class="flex w-[70%] justify-between">
-                <button id="disk-merah" type="button"
-                    class="mb-2 mr-2 flex inline-flex w-[100%] items-center items-center justify-center rounded-[14px] bg-redDefault px-5 py-2.5 text-center text-sm shadow-inset-custom disabled:cursor-not-allowed">
-                    <p class="text-lg font-bold text-whiteDefault">DISKULIFIKASI</p>
-                </button>
             </div>
             <div class="flex w-[70%] justify-between">
                 <button type="button" id="popup-merah"
                     class="mb-2 mr-2 flex inline-flex w-[100%] items-center items-center justify-center rounded-[14px] bg-redDefault px-5 py-2.5 text-center text-sm shadow-inset-custom disabled:cursor-not-allowed">
-                    <p class="text-lg font-bold text-whiteDefault">MULAI PENGAMBILAN KEPUTUSAN</p>
+                    <p class="text-lg font-bold text-whiteDefault">CALL</p>
+                </button>
+            </div>
+            <div class="flex w-[70%] justify-between">
+                <button id="disk-merah" type="button"
+                    class="mb-2 mr-2 flex inline-flex w-[100%] items-center items-center justify-center rounded-[14px] bg-redDefault px-5 py-2.5 text-center text-sm shadow-inset-custom disabled:cursor-not-allowed">
+                    <p class="text-lg font-bold text-whiteDefault">WMP</p>
                 </button>
             </div>
         </div>

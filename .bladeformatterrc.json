@@ -11,6 +11,5 @@
     "noPhpSyntaxCheck": false,
     "noSingleQuote": false,
     "noTrailingCommaPhp": false,
-    "componentPrefix": ["x-", "livewire:"],
-    "phpVersion": "8.4"
+    "phpVersion": "7.4"
 }
