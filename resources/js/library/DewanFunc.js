@@ -195,32 +195,58 @@ export function updateDataScore(event) {
 }
 
 export function cekWinner() {
-    console.log("tes");
-    const red = parseInt(dataDewan["blueScore"].textContent);
-    const blue = parseInt(dataDewan["redScore"].textContent);
-    if (red > blue) {
-        console.log("masuk");
-        updatePertandingan("merah");
+    console.log("🏆 Checking winner based on final scores...");
+    // ✅ FIX: Corrected variable assignment (was backwards)
+    const redScore = parseInt(dataDewan["redScore"].textContent) || 0;
+    const blueScore = parseInt(dataDewan["blueScore"].textContent) || 0;
+
+    console.log(`Final scores - Red: ${redScore}, Blue: ${blueScore}`);
+
+    if (redScore > blueScore) {
+        console.log("🔴 Red corner wins by points");
+        updatePertandingan("merah", redScore, blueScore);
+    } else if (blueScore > redScore) {
+        console.log("🔵 Blue corner wins by points");
+        updatePertandingan("biru", redScore, blueScore);
     } else {
-        console.log("masuk");
-        updatePertandingan("biru");
+        console.log("⚖️ Tie - need tiebreaker rules");
+        // TODO: Implement tiebreaker logic
+        updatePertandingan("merah", redScore, blueScore); // Default to red for now
     }
 }
 
-export function updatePertandingan(winner) {
+export function updatePertandingan(winner, redScore = 0, blueScore = 0) {
     const dataPartai = getDataGelanggang();
     localStorage.clear();
-    axios.post("/operator-update", {
+
+    // Determine winner info
+    const winnerName = winner === "merah" ? dataPartai.namaMerah : dataPartai.namaBiru;
+    const winnerCorner = winner === "merah" ? "Merah" : "Biru";
+    const winnerContingent = winner === "merah" ? dataPartai.kontingenMerah : dataPartai.kontingenBiru;
+
+    // ✅ FIX: Send to /winner endpoint (not /operator-update)
+    // ✅ FIX: Corrected contingent assignment (was swapped)
+    // ✅ NEW: Added winMethod, redScore, blueScore
+    axios.post("/winner", {
         message: {
-            blueName: dataPartai.namaBiru,
+            name: winnerName,
+            corner: winnerCorner,
+            contingent: winnerContingent,
+            winMethod: "Teknik", // Automatic win by points
+            redScore: redScore,
+            blueScore: blueScore,
+            // Additional match data for records
             redName: dataPartai.namaMerah,
-            blueContingent: dataPartai.kontingenMerah,
-            redContingent: dataPartai.kontingenBiru,
+            blueName: dataPartai.namaBiru,
+            redContingent: dataPartai.kontingenMerah,  // ✅ Fixed: was kontingenBiru
+            blueContingent: dataPartai.kontingenBiru,  // ✅ Fixed: was kontingenMerah
             babak: dataPartai.babak,
-            time: 0,
             activeRound: activeRound.textContent,
-            action: winner,
         },
+    }).then(() => {
+        console.log("✅ Winner broadcast successful");
+    }).catch((error) => {
+        console.error("❌ Error broadcasting winner:", error);
     });
 }
 export function changeRoundDewan(round) {

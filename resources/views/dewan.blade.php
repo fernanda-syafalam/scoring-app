@@ -14,6 +14,7 @@
     <header>
         <label for="user"></label><input id="user" type="text" hidden="hidden" data-user="{{ $gelangang }}" detail-user="{{ auth()->user() }}">
         <x-winner-modal />
+        <x-wmp-confirmation-modal />
         <x-websocket-status />
 
         <div class="flex justify-between">
@@ -234,6 +235,7 @@
     <script src="{{ mix('js/scoreUpdate.js') }}"></script>
     <script src="{{ mix('js/scoringDewan.js') }}"></script>
     <script src="{{ mix('js/dropVerification.js') }}"></script>
+    <script src="{{ mix('js/wmpConfirmationModal.js') }}"></script>
 </body>
 
 </html>

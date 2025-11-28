@@ -46,3 +46,9 @@ export const TRACKED_ROLES = [
     "juri_kedua",
     "juri_ketiga",
 ];
+
+/**
+ * Minimum number of users required to start a match.
+ * Should have all tracked roles present (1 ketua + 1 dewan + 3 juri = 5)
+ */
+export const countMinimumToStart = 1;

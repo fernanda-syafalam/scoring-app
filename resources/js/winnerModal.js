@@ -35,6 +35,9 @@ const CONFIG = {
         WINNER_NAME: 'winner',
         WINNER_CORNER: 'corner',
         WINNER_CONTINGENT: 'contingent',
+        WIN_METHOD: 'win-method',
+        FINAL_RED_SCORE: 'final-red-score',
+        FINAL_BLUE_SCORE: 'final-blue-score',
         DONE_BUTTON: 'done-button'
     }
 };
@@ -53,6 +56,9 @@ const elements = {
     winner: null,
     corner: null,
     contingent: null,
+    winMethod: null,
+    finalRedScore: null,
+    finalBlueScore: null,
     doneButton: null
 };
 
@@ -120,6 +126,9 @@ function cacheElements() {
         elements.winner = document.getElementById(CONFIG.ELEMENTS.WINNER_NAME);
         elements.corner = document.getElementById(CONFIG.ELEMENTS.WINNER_CORNER);
         elements.contingent = document.getElementById(CONFIG.ELEMENTS.WINNER_CONTINGENT);
+        elements.winMethod = document.getElementById(CONFIG.ELEMENTS.WIN_METHOD);
+        elements.finalRedScore = document.getElementById(CONFIG.ELEMENTS.FINAL_RED_SCORE);
+        elements.finalBlueScore = document.getElementById(CONFIG.ELEMENTS.FINAL_BLUE_SCORE);
         elements.doneButton = document.getElementById(CONFIG.ELEMENTS.DONE_BUTTON);
 
         // Verify required elements exist
@@ -129,6 +138,9 @@ function cacheElements() {
             elements.winner,
             elements.corner,
             elements.contingent,
+            elements.winMethod,
+            elements.finalRedScore,
+            elements.finalBlueScore,
             elements.doneButton
         ];
 
@@ -231,7 +243,7 @@ function handleWinnerAnnouncement(event) {
         return;
     }
 
-    const { name, corner, contingent } = event.data;
+    const { name, corner, contingent, winMethod, redScore, blueScore } = event.data;
 
     // Validate required properties
     if (!name || !corner || !contingent) {
@@ -240,12 +252,36 @@ function handleWinnerAnnouncement(event) {
     }
 
     try {
-        console.log('🏆 Winner announcement received:', { name, corner, contingent });
+        console.log('🏆 Winner announcement received:', {
+            name,
+            corner,
+            contingent,
+            winMethod,
+            redScore,
+            blueScore
+        });
 
         // Update modal content
         if (elements.winner) elements.winner.innerText = name;
         if (elements.corner) elements.corner.innerText = corner;
         if (elements.contingent) elements.contingent.innerText = contingent;
+
+        // Update new fields (with defaults)
+        if (elements.winMethod) {
+            elements.winMethod.innerText = winMethod || '-';
+            // Add color coding for win method
+            if (winMethod === 'Teknik') {
+                elements.winMethod.className = 'font-bold text-green-600 text-lg';
+            } else if (winMethod === 'Diskualifikasi') {
+                elements.winMethod.className = 'font-bold text-yellow-600 text-lg';
+            }
+        }
+        if (elements.finalRedScore) {
+            elements.finalRedScore.innerText = redScore !== undefined ? redScore : '0';
+        }
+        if (elements.finalBlueScore) {
+            elements.finalBlueScore.innerText = blueScore !== undefined ? blueScore : '0';
+        }
 
         // Show modal
         showModal();

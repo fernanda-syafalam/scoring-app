@@ -29,6 +29,8 @@ import {
     updatePertandingan,
 } from "./library/DewanFunc";
 
+import { showWMPConfirmation } from "./wmpConfirmationModal";
+
 require("./bootstrap");
 
 /**
@@ -252,14 +254,19 @@ function getHandlerForConfig(config) {
 }
 
 /**
- * Handle disqualification action
- * @param {string} opponent - Opponent corner (red or blue)
+ * Handle disqualification action (WMP button click)
+ * Shows confirmation modal instead of directly declaring winner
+ * @param {string} winner - Winner corner ('red' or 'blue')
  */
-function handleDisqualification(opponent) {
+function handleDisqualification(winner) {
     try {
-        setTimeout(() => {
-            updatePertandingan(opponent);
-        }, CONFIG.TIMEOUTS.BROADCAST_DELAY);
+        // Convert corner to Indonesian format (merah/biru)
+        const winnerCorner = winner === CONFIG.CORNERS.RED ? 'merah' : 'biru';
+
+        // Show WMP confirmation modal
+        showWMPConfirmation(winnerCorner);
+
+        console.log(`📋 WMP confirmation modal shown for ${winnerCorner}`);
     } catch (error) {
         console.error('❌ Error handling disqualification:', error);
     }

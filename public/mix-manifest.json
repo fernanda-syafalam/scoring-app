@@ -8,6 +8,7 @@
     "/js/dropVerification.js": "/js/dropVerification.js",
     "/js/papanScore.js": "/js/papanScore.js",
     "/js/winnerModal.js": "/js/winnerModal.js",
+    "/js/wmpConfirmationModal.js": "/js/wmpConfirmationModal.js",
     "/js/library/DewanFunc.js": "/js/library/DewanFunc.js",
     "/js/library/JuriFunc.js": "/js/library/JuriFunc.js",
     "/js/library/LogoutFunc.js": "/js/library/LogoutFunc.js",

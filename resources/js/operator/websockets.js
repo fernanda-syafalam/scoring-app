@@ -1,9 +1,14 @@
 import { joinChanel } from "../channel";
 import { state } from "./state.js";
-import { showError, setElementColor } from "./dom.js";
-import { ROLE_IDS, TRACKED_ROLES, CONFIG } from "./constants.js";
+import { showError, setElementColor, elements } from "./dom.js";
+import {
+    ROLE_IDS,
+    TRACKED_ROLES,
+    CONFIG,
+    countMinimumToStart,
+} from "./constants.js";
 import { uploadWinnerData } from "./api.js";
-import { finishMatch, handleRoundDone } from "./events.js";
+import {  handleRoundDone } from "./events.js";
 
 /**
  * Setup WebSocket channels for real-time communication.
