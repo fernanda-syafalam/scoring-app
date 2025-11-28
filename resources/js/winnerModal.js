@@ -20,26 +20,32 @@ import "./bootstrap";
 const CONFIG = {
     // CSS classes
     CSS_CLASSES: {
-        HIDDEN: 'hidden'
+        HIDDEN: "hidden",
     },
 
     // Timeouts
     TIMEOUTS: {
-        AUTO_DISMISS: 5000 // 5 seconds
+        AUTO_DISMISS: 5000, // 5 seconds
+        RECONNECT_DELAY: 5000, // 5 seconds
+    },
+
+    // WebSocket settings
+    WEBSOCKET: {
+        MAX_RECONNECT_ATTEMPTS: 5,
     },
 
     // Element IDs
     ELEMENTS: {
-        USER: 'user',
-        MODAL_WINNER: 'modal-winner',
-        WINNER_NAME: 'winner',
-        WINNER_CORNER: 'corner',
-        WINNER_CONTINGENT: 'contingent',
-        WIN_METHOD: 'win-method',
-        FINAL_RED_SCORE: 'final-red-score',
-        FINAL_BLUE_SCORE: 'final-blue-score',
-        DONE_BUTTON: 'done-button'
-    }
+        USER: "user",
+        MODAL_WINNER: "modal-winner",
+        WINNER_NAME: "winner",
+        WINNER_CORNER: "corner",
+        WINNER_CONTINGENT: "contingent",
+        WIN_METHOD: "win-method",
+        FINAL_RED_SCORE: "final-red-score",
+        FINAL_BLUE_SCORE: "final-blue-score",
+        DONE_BUTTON: "done-button",
+    },
 };
 
 // ============================================================================
@@ -59,7 +65,7 @@ const elements = {
     winMethod: null,
     finalRedScore: null,
     finalBlueScore: null,
-    doneButton: null
+    doneButton: null,
 };
 
 /**
@@ -89,17 +95,17 @@ let autoDismissTimeout = null;
  */
 function initWinnerModal() {
     try {
-        console.log('🚀 Initializing Winner Modal Module...');
+        console.log("🚀 Initializing Winner Modal Module...");
 
         // Cache DOM elements
         if (!cacheElements()) {
-            throw new Error('Failed to cache required DOM elements');
+            throw new Error("Failed to cache required DOM elements");
         }
 
         // Extract user data
         userData = extractUserData();
         if (!userData?.gelanggang_id) {
-            throw new Error('Invalid user data: missing gelanggang_id');
+            throw new Error("Invalid user data: missing gelanggang_id");
         }
 
         // Setup WebSocket channel
@@ -108,10 +114,10 @@ function initWinnerModal() {
         // Setup event listeners
         setupEventListeners();
 
-        console.log('✅ Winner Modal Module initialized successfully');
+        console.log("✅ Winner Modal Module initialized successfully");
     } catch (error) {
-        console.error('❌ Fatal error initializing winner modal:', error);
-        showError('Failed to initialize winner modal');
+        console.error("❌ Fatal error initializing winner modal:", error);
+        showError("Failed to initialize winner modal");
     }
 }
 
@@ -122,14 +128,28 @@ function initWinnerModal() {
 function cacheElements() {
     try {
         elements.userElement = document.getElementById(CONFIG.ELEMENTS.USER);
-        elements.modalWinner = document.getElementById(CONFIG.ELEMENTS.MODAL_WINNER);
+        elements.modalWinner = document.getElementById(
+            CONFIG.ELEMENTS.MODAL_WINNER
+        );
         elements.winner = document.getElementById(CONFIG.ELEMENTS.WINNER_NAME);
-        elements.corner = document.getElementById(CONFIG.ELEMENTS.WINNER_CORNER);
-        elements.contingent = document.getElementById(CONFIG.ELEMENTS.WINNER_CONTINGENT);
-        elements.winMethod = document.getElementById(CONFIG.ELEMENTS.WIN_METHOD);
-        elements.finalRedScore = document.getElementById(CONFIG.ELEMENTS.FINAL_RED_SCORE);
-        elements.finalBlueScore = document.getElementById(CONFIG.ELEMENTS.FINAL_BLUE_SCORE);
-        elements.doneButton = document.getElementById(CONFIG.ELEMENTS.DONE_BUTTON);
+        elements.corner = document.getElementById(
+            CONFIG.ELEMENTS.WINNER_CORNER
+        );
+        elements.contingent = document.getElementById(
+            CONFIG.ELEMENTS.WINNER_CONTINGENT
+        );
+        elements.winMethod = document.getElementById(
+            CONFIG.ELEMENTS.WIN_METHOD
+        );
+        elements.finalRedScore = document.getElementById(
+            CONFIG.ELEMENTS.FINAL_RED_SCORE
+        );
+        elements.finalBlueScore = document.getElementById(
+            CONFIG.ELEMENTS.FINAL_BLUE_SCORE
+        );
+        elements.doneButton = document.getElementById(
+            CONFIG.ELEMENTS.DONE_BUTTON
+        );
 
         // Verify required elements exist
         const required = [
@@ -141,17 +161,17 @@ function cacheElements() {
             elements.winMethod,
             elements.finalRedScore,
             elements.finalBlueScore,
-            elements.doneButton
+            elements.doneButton,
         ];
 
-        const allPresent = required.every(el => el !== null);
+        const allPresent = required.every((el) => el !== null);
         if (!allPresent) {
-            console.warn('⚠️ Some required DOM elements are missing');
+            console.warn("⚠️ Some required DOM elements are missing");
         }
 
         return allPresent;
     } catch (error) {
-        console.error('❌ Error caching DOM elements:', error);
+        console.error("❌ Error caching DOM elements:", error);
         return false;
     }
 }
@@ -164,22 +184,22 @@ function cacheElements() {
 function extractUserData() {
     try {
         if (!elements.userElement) {
-            throw new Error('User element not found');
+            throw new Error("User element not found");
         }
 
         const data = JSON.parse(elements.userElement.getAttribute("data-user"));
 
-        if (!data || typeof data !== 'object') {
-            throw new Error('Invalid user data format');
+        if (!data || typeof data !== "object") {
+            throw new Error("Invalid user data format");
         }
 
         if (!data.gelanggang_id) {
-            throw new Error('Missing gelanggang_id in user data');
+            throw new Error("Missing gelanggang_id in user data");
         }
 
         return data;
     } catch (error) {
-        console.error('❌ Failed to extract user data:', error);
+        console.error("❌ Failed to extract user data:", error);
         throw error;
     }
 }
@@ -189,7 +209,7 @@ function extractUserData() {
  */
 function setupChannel() {
     try {
-        console.log('📡 Setting up winner channel...');
+        console.log("📡 Setting up winner channel...");
 
         channelWinner = Echo.join(`presence.winner.${userData.gelanggang_id}`);
 
@@ -197,14 +217,14 @@ function setupChannel() {
             try {
                 handleWinnerAnnouncement(event);
             } catch (error) {
-                console.error('❌ Error handling winner announcement:', error);
+                console.error("❌ Error handling winner announcement:", error);
             }
         });
 
-        console.log('✅ Winner channel configured');
+        console.log("✅ Winner channel configured");
     } catch (error) {
-        console.error('❌ Error setting up winner channel:', error);
-        showError('Failed to setup winner channel');
+        console.error("❌ Error setting up winner channel:", error);
+        showError("Failed to setup winner channel");
     }
 }
 
@@ -214,12 +234,12 @@ function setupChannel() {
 function setupEventListeners() {
     try {
         if (elements.doneButton) {
-            elements.doneButton.addEventListener('click', handleDismiss);
+            elements.doneButton.addEventListener("click", handleDismiss);
         }
 
-        console.log('✅ Event listeners attached');
+        console.log("✅ Event listeners attached");
     } catch (error) {
-        console.error('❌ Error setting up event listeners:', error);
+        console.error("❌ Error setting up event listeners:", error);
     }
 }
 
@@ -233,32 +253,33 @@ function setupEventListeners() {
  */
 function handleWinnerAnnouncement(event) {
     // Input validation
-    if (!event || typeof event !== 'object') {
-        console.error('❌ Invalid winner event:', event);
+    if (!event || typeof event !== "object") {
+        console.error("❌ Invalid winner event:", event);
         return;
     }
 
-    if (!event.data || typeof event.data !== 'object') {
-        console.error('❌ Winner event missing data property:', event);
+    if (!event.data || typeof event.data !== "object") {
+        console.error("❌ Winner event missing data property:", event);
         return;
     }
 
-    const { name, corner, contingent, winMethod, redScore, blueScore } = event.data;
+    const { name, corner, contingent, winMethod, redScore, blueScore } =
+        event.data;
 
     // Validate required properties
     if (!name || !corner || !contingent) {
-        console.warn('⚠️ Winner data missing required properties:', event.data);
+        console.warn("⚠️ Winner data missing required properties:", event.data);
         return;
     }
 
     try {
-        console.log('🏆 Winner announcement received:', {
+        console.log("🏆 Winner announcement received:", {
             name,
             corner,
             contingent,
             winMethod,
             redScore,
-            blueScore
+            blueScore,
         });
 
         // Update modal content
@@ -268,19 +289,23 @@ function handleWinnerAnnouncement(event) {
 
         // Update new fields (with defaults)
         if (elements.winMethod) {
-            elements.winMethod.innerText = winMethod || '-';
+            elements.winMethod.innerText = winMethod || "-";
             // Add color coding for win method
-            if (winMethod === 'Teknik') {
-                elements.winMethod.className = 'font-bold text-green-600 text-lg';
-            } else if (winMethod === 'Diskualifikasi') {
-                elements.winMethod.className = 'font-bold text-yellow-600 text-lg';
+            if (winMethod === "Teknik") {
+                elements.winMethod.className =
+                    "font-bold text-green-600 text-lg";
+            } else if (winMethod === "Diskualifikasi") {
+                elements.winMethod.className =
+                    "font-bold text-yellow-600 text-lg";
             }
         }
         if (elements.finalRedScore) {
-            elements.finalRedScore.innerText = redScore !== undefined ? redScore : '0';
+            elements.finalRedScore.innerText =
+                redScore !== undefined ? redScore : "0";
         }
         if (elements.finalBlueScore) {
-            elements.finalBlueScore.innerText = blueScore !== undefined ? blueScore : '0';
+            elements.finalBlueScore.innerText =
+                blueScore !== undefined ? blueScore : "0";
         }
 
         // Show modal
@@ -288,9 +313,8 @@ function handleWinnerAnnouncement(event) {
 
         // Setup auto-dismiss
         setupAutoDismiss();
-
     } catch (error) {
-        console.error('❌ Error displaying winner announcement:', error);
+        console.error("❌ Error displaying winner announcement:", error);
     }
 }
 
@@ -302,7 +326,7 @@ function handleDismiss() {
         clearAutoDismiss();
         hideModal();
     } catch (error) {
-        console.error('❌ Error dismissing modal:', error);
+        console.error("❌ Error dismissing modal:", error);
     }
 }
 
@@ -316,14 +340,14 @@ function handleDismiss() {
 function showModal() {
     try {
         if (!elements.modalWinner) {
-            console.warn('⚠️ Modal element not found');
+            console.warn("⚠️ Modal element not found");
             return;
         }
 
         elements.modalWinner.classList.remove(CONFIG.CSS_CLASSES.HIDDEN);
-        console.log('✅ Winner modal displayed');
+        console.log("✅ Winner modal displayed");
     } catch (error) {
-        console.error('❌ Error showing modal:', error);
+        console.error("❌ Error showing modal:", error);
     }
 }
 
@@ -333,14 +357,14 @@ function showModal() {
 function hideModal() {
     try {
         if (!elements.modalWinner) {
-            console.warn('⚠️ Modal element not found');
+            console.warn("⚠️ Modal element not found");
             return;
         }
 
         elements.modalWinner.classList.add(CONFIG.CSS_CLASSES.HIDDEN);
-        console.log('✅ Winner modal hidden');
+        console.log("✅ Winner modal hidden");
     } catch (error) {
-        console.error('❌ Error hiding modal:', error);
+        console.error("❌ Error hiding modal:", error);
     }
 }
 
@@ -355,11 +379,10 @@ function setupAutoDismiss() {
         // Set new timeout
         autoDismissTimeout = setTimeout(() => {
             hideModal();
-            console.log('⏱️ Modal auto-dismissed');
+            console.log("⏱️ Modal auto-dismissed");
         }, CONFIG.TIMEOUTS.AUTO_DISMISS);
-
     } catch (error) {
-        console.error('❌ Error setting up auto-dismiss:', error);
+        console.error("❌ Error setting up auto-dismiss:", error);
     }
 }
 
@@ -373,7 +396,7 @@ function clearAutoDismiss() {
             autoDismissTimeout = null;
         }
     } catch (error) {
-        console.error('❌ Error clearing auto-dismiss:', error);
+        console.error("❌ Error clearing auto-dismiss:", error);
     }
 }
 
@@ -386,7 +409,7 @@ function clearAutoDismiss() {
  * @param {string} message - Error message
  */
 function showError(message) {
-    console.error('⚠️ Error:', message);
+    console.error("⚠️ Error:", message);
     // TODO: Implement toast notification library
 }
 
@@ -395,8 +418,8 @@ function showError(message) {
 // ============================================================================
 
 // Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initWinnerModal);
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initWinnerModal);
 } else {
     initWinnerModal();
 }
@@ -410,5 +433,5 @@ export {
     handleDismiss,
     showModal,
     hideModal,
-    CONFIG
+    CONFIG,
 };

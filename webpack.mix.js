@@ -17,7 +17,10 @@ mix.js("resources/js/app.js", "public/js")
     .js("resources/js/scoreUpdate.js", "public/js")
     .js("resources/js/operator/index.js", "public/js/operator.js")
     .js("resources/js/ketuaPertandingan.js", "public/js")
-    .js("resources/js/drop-verification/index.js", "public/js/dropVerification.js")
+    .js(
+        "resources/js/drop-verification/index.js",
+        "public/js/dropVerification.js"
+    )
     .js("resources/js/papanScore.js", "public/js")
     .js("resources/js/winnerModal.js", "public/js")
     .js("resources/js/wmpConfirmationModal.js", "public/js")
@@ -27,7 +30,8 @@ mix.js("resources/js/app.js", "public/js")
     .js("resources/js/library/Time.js", "public/js/library")
     .postCss("resources/css/app.css", "public/css", [
         //
-    ]);
+    ])
+    .sourceMaps();
 
 mix.options({
     hmrOptions: {

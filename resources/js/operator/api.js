@@ -12,7 +12,7 @@ export function updateMatch(action = CONFIG.ACTIONS.ROUND) {
     try {
         if (!state.partaiData || !state.userData) {
             console.warn("⚠️ Missing required data for match update");
-            return Promise.resolve(); // Return resolved promise if no data
+            return Promise.resolve();
         }
 
         const payload = {
@@ -29,14 +29,19 @@ export function updateMatch(action = CONFIG.ACTIONS.ROUND) {
         };
 
         // ✅ FIXED: Return the axios promise so callers can wait for completion
-        const request = axios.post(CONFIG.ENDPOINTS.OPERATOR_UPDATE, payload).catch((error) => {
-            console.error("❌ Failed to update match:", error);
-            throw error; // Re-throw so caller knows about the error
-        });
+        const request = axios
+            .post(CONFIG.ENDPOINTS.OPERATOR_UPDATE, payload)
+            .catch((error) => {
+                console.error("❌ Failed to update match:", error);
+                throw error; // Re-throw so caller knows about the error
+            });
 
         // ✅ FIXED: Simplified saveData() call - no more confusing parameters
         // Save state after any action except finish and reset
-        if (action !== CONFIG.ACTIONS.FINISH && action !== CONFIG.ACTIONS.RESET) {
+        if (
+            action !== CONFIG.ACTIONS.FINISH &&
+            action !== CONFIG.ACTIONS.RESET
+        ) {
             saveData();
         }
 
@@ -57,32 +62,31 @@ export function updateMatch(action = CONFIG.ACTIONS.ROUND) {
  * @param {string} winner - Winner corner ('merah' or 'biru').
  * @param {string} winMethod - Win method ('Teknik' or 'Diskualifikasi'). Defaults to 'Diskualifikasi' for operator selection.
  */
-export function uploadWinnerData(winner, winMethod = 'Diskualifikasi') {
+export function uploadWinnerData(winner, winMethod = "Diskualifikasi") {
     try {
         if (!state.partaiData || !state.canSubmit) {
-            console.warn('⚠️ Cannot upload winner: missing data or submission locked');
+            console.warn("⚠️ Cannot upload winner: missing data or submission locked");
             return;
         }
 
         // Determine winner information
         const isRed = winner === CONFIG.ACTIONS.WINNER_RED;
-        const winnerName = isRed ? state.partaiData.sudut_merah : state.partaiData.sudut_biru;
+        const winnerName = isRed
+            ? state.partaiData.sudut_merah
+            : state.partaiData.sudut_biru;
         const winnerCorner = isRed ? "Merah" : "Biru";
         const winnerContingent = isRed
             ? state.partaiData.contingen_sudut_merah
             : state.partaiData.contingen_sudut_biru;
 
-        // ✅ FIXED: Added scores - get from current match state or default to 0
-        // In operator view, we may not have real-time scores, so we use 0 as placeholder
-        // Real scores should come from dewan/juri views
+
         const winnerData = {
             name: winnerName,
             corner: winnerCorner,
             contingent: winnerContingent,
             winMethod: winMethod, // ✅ NEW: Win method
-            redScore: 0,          // ✅ NEW: Placeholder (actual scores from judges)
-            blueScore: 0,         // ✅ NEW: Placeholder (actual scores from judges)
-            // Additional match data for records
+            redScore: 0, // ✅ NEW: Placeholder (actual scores from judges)
+            blueScore: 0, // ✅ NEW: Placeholder (actual scores from judges)
             redName: state.partaiData.sudut_merah,
             blueName: state.partaiData.sudut_biru,
             redContingent: state.partaiData.contingen_sudut_merah,
@@ -91,14 +95,14 @@ export function uploadWinnerData(winner, winMethod = 'Diskualifikasi') {
             activeRound: state.activeRound,
         };
 
-        console.log('📤 Uploading winner data:', winnerData);
+        console.log("📤 Uploading winner data:", winnerData);
 
         axios
             .post(CONFIG.ENDPOINTS.WINNER, {
                 message: winnerData,
             })
             .then(() => {
-                console.log('✅ Winner data uploaded successfully');
+                console.log("✅ Winner data uploaded successfully");
             })
             .catch((error) => {
                 console.error("❌ Failed to upload winner data:", error);

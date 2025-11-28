@@ -48,26 +48,26 @@ const CONFIG = {
     // Timer settings
     TIMER: {
         DEFAULT_DURATION: 120,
-        UPDATE_INTERVAL: 1000
+        UPDATE_INTERVAL: 1000,
     },
 
     // Match actions
     ACTIONS: {
-        START: 'start',
-        PAUSE: 'pause',
-        PLAY: 'play',
-        RESET: 'reset',
-        FINISH: 'finish',
-        ROUND: 'round'
+        START: "start",
+        PAUSE: "pause",
+        PLAY: "play",
+        RESET: "reset",
+        FINISH: "finish",
+        ROUND: "round",
     },
 
     // Storage keys
     STORAGE: {
-        TIMER_STARTED: 'timerStarted',
-        TIMER_PAUSED: 'timerIsPaused',
-        TIMER_SECONDS: 'timerSecondsRemaining',
-        TIMER_END_TIME: 'timerEndTime'
-    }
+        TIMER_STARTED: "timerStarted",
+        TIMER_PAUSED: "timerIsPaused",
+        TIMER_SECONDS: "timerSecondsRemaining",
+        TIMER_END_TIME: "timerEndTime",
+    },
 };
 
 // ============================================================================
@@ -88,7 +88,7 @@ const state = {
     isPaused: false,
     endTime: null,
     secondsRemaining: 0,
-    round: 'round-1'
+    round: "round-1",
 };
 
 // ============================================================================
@@ -100,15 +100,17 @@ const state = {
  */
 function init() {
     try {
-        console.log('🚀 Initializing Papan Score (Scoreboard)...');
+        console.log("🚀 Initializing Papan Score (Scoreboard)...");
 
         // Cache DOM elements
-        state.blueScore = document.getElementById('blueScore');
-        state.redScore = document.getElementById('redScore');
-        state.timerDisplay = document.getElementById('timer');
+        state.blueScore = document.getElementById("blueScore");
+        state.redScore = document.getElementById("redScore");
+        state.timerDisplay = document.getElementById("timer");
 
         if (!state.blueScore || !state.redScore || !state.timerDisplay) {
-            console.warn('⚠️ Some DOM elements not found, scoreboard may not function fully');
+            console.warn(
+                "⚠️ Some DOM elements not found, scoreboard may not function fully"
+            );
         }
 
         // Setup event listeners
@@ -120,14 +122,14 @@ function init() {
 
         // Restore timer state if available
         if (localStorage.getItem(CONFIG.STORAGE.TIMER_STARTED)) {
-            console.log('📦 Restoring timer state...');
+            console.log("📦 Restoring timer state...");
             loadSavedTimer();
         }
 
-        console.log('✅ Papan Score initialized successfully');
+        console.log("✅ Papan Score initialized successfully");
     } catch (error) {
-        console.error('❌ Error initializing papan score:', error);
-        showError('Failed to initialize scoreboard');
+        console.error("❌ Error initializing papan score:", error);
+        showError("Failed to initialize scoreboard");
     }
 }
 
@@ -143,7 +145,7 @@ function setupWebSocketListeners() {
             try {
                 handleJudgeUpdate(event);
             } catch (error) {
-                console.error('❌ Error handling judge update:', error);
+                console.error("❌ Error handling judge update:", error);
             }
         });
 
@@ -154,31 +156,37 @@ function setupWebSocketListeners() {
                     changeIndicatorPelanggaran(event.color, event.penalty);
                 }
             } catch (error) {
-                console.error('❌ Error handling penalty:', error);
+                console.error("❌ Error handling penalty:", error);
             }
         });
 
         // Listen for score updates from other judges
-        channelUpdateScore.listen(`.updateScore.${userData.gelanggang_id}`, (event) => {
-            try {
-                updateScore(event);
-            } catch (error) {
-                console.error('❌ Error handling score update:', error);
+        channelUpdateScore.listen(
+            `.updateScore.${userData.gelanggang_id}`,
+            (event) => {
+                try {
+                    updateScore(event);
+                } catch (error) {
+                    console.error("❌ Error handling score update:", error);
+                }
             }
-        });
+        );
 
         // Listen for operator controls
-        channelOperator.listen(`.operator.${userData.gelanggang_id}`, (event) => {
-            try {
-                handleOperatorAction(event);
-            } catch (error) {
-                console.error('❌ Error handling operator action:', error);
+        channelOperator.listen(
+            `.operator.${userData.gelanggang_id}`,
+            (event) => {
+                try {
+                    handleOperatorAction(event);
+                } catch (error) {
+                    console.error("❌ Error handling operator action:", error);
+                }
             }
-        });
+        );
 
-        console.log('✅ WebSocket listeners attached');
+        console.log("✅ WebSocket listeners attached");
     } catch (error) {
-        console.error('❌ Error setting up WebSocket listeners:', error);
+        console.error("❌ Error setting up WebSocket listeners:", error);
     }
 }
 
@@ -192,8 +200,8 @@ function setupWebSocketListeners() {
  */
 function handleJudgeUpdate(event) {
     try {
-        if (!event || typeof event !== 'object') {
-            console.warn('⚠️ Invalid judge event:', event);
+        if (!event || typeof event !== "object") {
+            console.warn("⚠️ Invalid judge event:", event);
             return;
         }
 
@@ -202,7 +210,7 @@ function handleJudgeUpdate(event) {
         const id = event.id;
 
         if (!gerakan || !sudut || !id) {
-            console.warn('⚠️ Judge event missing required fields', event);
+            console.warn("⚠️ Judge event missing required fields", event);
             return;
         }
 
@@ -210,7 +218,7 @@ function handleJudgeUpdate(event) {
         indicatorUpdate(elementName, sudut);
         startTimeoutIndicator(elementName, sudut);
     } catch (error) {
-        console.error('❌ Error handling judge update:', error);
+        console.error("❌ Error handling judge update:", error);
     }
 }
 
@@ -220,37 +228,41 @@ function handleJudgeUpdate(event) {
  */
 function handleOperatorAction(event) {
     try {
-        if (!event || typeof event !== 'object') {
-            console.warn('⚠️ Invalid operator event:', event);
+        if (!event || typeof event !== "object") {
+            console.warn("⚠️ Invalid operator event:", event);
             return;
         }
 
         const action = event.action?.toLowerCase?.();
 
         if (!action) {
-            console.warn('⚠️ Operator event missing action property');
+            console.warn("⚠️ Operator event missing action property");
             return;
         }
 
         switch (action) {
             case CONFIG.ACTIONS.START:
-                if (event.time && typeof event.time === 'number') {
+                if (event.time && typeof event.time === "number") {
                     state.timePerRound = event.time;
                 }
-                console.log('📍 Match started');
+                console.log("📍 Match started");
                 startPertandingan(event);
                 break;
 
             case CONFIG.ACTIONS.RESET:
             case CONFIG.ACTIONS.FINISH:
-                console.log(`🔄 Match ${action}ed - clearing storage and reloading`);
+                console.log(
+                    `🔄 Match ${action}ed - clearing storage and reloading`
+                );
                 localStorage.clear();
                 location.reload();
                 break;
 
             case CONFIG.ACTIONS.ROUND:
                 if (!event.activeRound) {
-                    console.warn('⚠️ Round change missing activeRound property');
+                    console.warn(
+                        "⚠️ Round change missing activeRound property"
+                    );
                     return;
                 }
                 console.log(`📍 Round changed to: ${event.activeRound}`);
@@ -259,12 +271,15 @@ function handleOperatorAction(event) {
                 break;
 
             case CONFIG.ACTIONS.PAUSE:
-                console.log('⏸️ Match paused');
+                console.log("⏸️ Match paused");
                 updateTimer(CONFIG.ACTIONS.PAUSE);
                 break;
 
             case CONFIG.ACTIONS.PLAY:
-                console.log('▶️ Match resumed');
+                console.log("▶️ Match resumed");
+                if (event.time && typeof event.time === "number") {
+                    state.timePerRound = event.time;
+                }
                 updateTimer(CONFIG.ACTIONS.PLAY);
                 break;
 
@@ -272,7 +287,7 @@ function handleOperatorAction(event) {
                 console.warn(`⚠️ Unknown operator action: ${action}`);
         }
     } catch (error) {
-        console.error('❌ Error handling operator event:', error);
+        console.error("❌ Error handling operator event:", error);
     }
 }
 
@@ -283,7 +298,7 @@ function handleOperatorAction(event) {
 function handleRoundChange(event) {
     try {
         if (!event.activeRound) {
-            console.warn('⚠️ Invalid round in event:', event);
+            console.warn("⚠️ Invalid round in event:", event);
             return;
         }
 
@@ -294,7 +309,7 @@ function handleRoundChange(event) {
             activeRound.textContent = event.activeRound.toUpperCase();
         }
     } catch (error) {
-        console.error('❌ Error handling round change:', error);
+        console.error("❌ Error handling round change:", error);
     }
 }
 
@@ -310,12 +325,13 @@ function updateTimer(action) {
     try {
         if (action === CONFIG.ACTIONS.PLAY) {
             if (!state.timerStarted) {
+                state.isPaused = false;
                 startTimer(state.timePerRound);
                 state.timerStarted = true;
                 saveTimerState();
             } else {
-                startTimer(state.secondsRemaining);
                 state.isPaused = false;
+                startTimer(state.secondsRemaining);
                 saveTimerState();
             }
         } else if (action === CONFIG.ACTIONS.PAUSE) {
@@ -327,7 +343,7 @@ function updateTimer(action) {
             saveTimerState();
         }
     } catch (error) {
-        console.error('❌ Error updating timer:', error);
+        console.error("❌ Error updating timer:", error);
     }
 }
 
@@ -337,8 +353,8 @@ function updateTimer(action) {
  */
 function startTimer(seconds) {
     try {
-        if (!seconds || typeof seconds !== 'number' || seconds < 0) {
-            console.warn('⚠️ Invalid timer duration:', seconds);
+        if (!seconds || typeof seconds !== "number" || seconds < 0) {
+            console.warn("⚠️ Invalid timer duration:", seconds);
             return;
         }
 
@@ -375,7 +391,7 @@ function startTimer(seconds) {
             displayTimeLeft(secondsLeft);
         }, CONFIG.TIMER.UPDATE_INTERVAL);
     } catch (error) {
-        console.error('❌ Error starting timer:', error);
+        console.error("❌ Error starting timer:", error);
     }
 }
 
@@ -385,8 +401,8 @@ function startTimer(seconds) {
  */
 function displayTimeLeft(seconds) {
     try {
-        if (typeof seconds !== 'number' || seconds < 0) {
-            console.warn('⚠️ Invalid seconds for display:', seconds);
+        if (typeof seconds !== "number" || seconds < 0) {
+            console.warn("⚠️ Invalid seconds for display:", seconds);
             return;
         }
 
@@ -400,7 +416,7 @@ function displayTimeLeft(seconds) {
             state.timerDisplay.textContent = display;
         }
     } catch (error) {
-        console.error('❌ Error displaying time:', error);
+        console.error("❌ Error displaying time:", error);
     }
 }
 
@@ -415,7 +431,7 @@ function clearTimerState() {
         localStorage.removeItem(CONFIG.STORAGE.TIMER_SECONDS);
         localStorage.removeItem(CONFIG.STORAGE.TIMER_END_TIME);
     } catch (error) {
-        console.error('❌ Error clearing timer state:', error);
+        console.error("❌ Error clearing timer state:", error);
     }
 }
 
@@ -424,12 +440,24 @@ function clearTimerState() {
  */
 function saveTimerState() {
     try {
-        localStorage.setItem(CONFIG.STORAGE.TIMER_STARTED, String(state.timerStarted));
-        localStorage.setItem(CONFIG.STORAGE.TIMER_PAUSED, String(state.isPaused));
-        localStorage.setItem(CONFIG.STORAGE.TIMER_SECONDS, String(state.secondsRemaining));
-        localStorage.setItem(CONFIG.STORAGE.TIMER_END_TIME, String(state.endTime));
+        localStorage.setItem(
+            CONFIG.STORAGE.TIMER_STARTED,
+            String(state.timerStarted)
+        );
+        localStorage.setItem(
+            CONFIG.STORAGE.TIMER_PAUSED,
+            String(state.isPaused)
+        );
+        localStorage.setItem(
+            CONFIG.STORAGE.TIMER_SECONDS,
+            String(state.secondsRemaining)
+        );
+        localStorage.setItem(
+            CONFIG.STORAGE.TIMER_END_TIME,
+            String(state.endTime)
+        );
     } catch (error) {
-        console.error('❌ Error saving timer state:', error);
+        console.error("❌ Error saving timer state:", error);
     }
 }
 
@@ -439,10 +467,16 @@ function saveTimerState() {
 function loadSavedTimer() {
     try {
         const saved = {
-            started: localStorage.getItem(CONFIG.STORAGE.TIMER_STARTED) === 'true',
-            paused: localStorage.getItem(CONFIG.STORAGE.TIMER_PAUSED) === 'true',
-            seconds: parseInt(localStorage.getItem(CONFIG.STORAGE.TIMER_SECONDS)) || 0,
-            endTime: parseInt(localStorage.getItem(CONFIG.STORAGE.TIMER_END_TIME)) || 0
+            started:
+                localStorage.getItem(CONFIG.STORAGE.TIMER_STARTED) === "true",
+            paused:
+                localStorage.getItem(CONFIG.STORAGE.TIMER_PAUSED) === "true",
+            seconds:
+                parseInt(localStorage.getItem(CONFIG.STORAGE.TIMER_SECONDS)) ||
+                0,
+            endTime:
+                parseInt(localStorage.getItem(CONFIG.STORAGE.TIMER_END_TIME)) ||
+                0,
         };
 
         state.timerStarted = saved.started;
@@ -454,7 +488,7 @@ function loadSavedTimer() {
             startTimer(state.secondsRemaining);
         }
     } catch (error) {
-        console.error('❌ Error loading saved timer:', error);
+        console.error("❌ Error loading saved timer:", error);
     }
 }
 
@@ -467,7 +501,7 @@ function loadSavedTimer() {
  * @param {string} message - Error message to display
  */
 function showError(message) {
-    console.error('⚠️ Error:', message);
+    console.error("⚠️ Error:", message);
     // TODO: Implement toast notification library
 }
 
@@ -476,8 +510,8 @@ function showError(message) {
 // ============================================================================
 
 // Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
 } else {
     init();
 }
@@ -497,5 +531,5 @@ export {
     saveTimerState,
     loadSavedTimer,
     handleJudgeUpdate,
-    handleRoundChange
+    handleRoundChange,
 };
