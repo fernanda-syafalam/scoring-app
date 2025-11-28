@@ -465,7 +465,9 @@ function handleOperatorAction(event) {
         },
         'finish': () => {
             console.log('✅ Match finished');
-            // Keep data for review but disable actions
+            // Clear localStorage and disable actions
+            localStorage.clear();
+            enabledAction(false);
         },
         'round': () => {
             if (!event.activeRound) {
@@ -476,6 +478,11 @@ function handleOperatorAction(event) {
             enabledAction(false);
             changeRoundJuri(event.activeRound);
             updateRoundJuri(event.activeRound);
+            // ✅ FIXED: Re-enable actions after round change completes (1 second delay)
+            setTimeout(() => {
+                enabledAction(true);
+                console.log('✅ Actions re-enabled for new round');
+            }, 1000);
         },
         'pause': () => {
             console.log('⏸️ Match paused');

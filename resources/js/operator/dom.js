@@ -88,26 +88,39 @@ export function setElementColor(element, colorClass, add) {
 
 /**
  * Toggle pause/play UI state.
- * @param {boolean} status - Optional status override.
+ * ✅ FIXED: Now properly handles explicit state values
+ * @param {boolean|null} status - Explicit status value (true=paused, false=playing), or null to toggle
  */
 export function togglePausePlay(status = null) {
     try {
-        if (status !== null) {
+        // Store previous state for logging
+        const previousState = state.pauseStatus;
+
+        if (status !== null && status !== undefined) {
+            // Explicit state provided - set it directly (no toggle)
             state.pauseStatus = status;
         } else {
+            // No explicit state - toggle current state
             state.pauseStatus = !state.pauseStatus;
         }
 
+        // Update button UI
         if (elements.pausePlay) {
+            // Button shows the NEXT action (what will happen when clicked)
+            // If paused (true) → show "MULAI" (resume)
+            // If playing (false) → show "JEDA" (pause)
             elements.pausePlay.textContent = state.pauseStatus
-                ? "JEDA"
-                : "MULAI";
+                ? "MULAI"  // ✅ FIXED: Swapped - when paused, show "start"
+                : "JEDA";  // When playing, show "pause"
+
             setElementColor(
                 elements.pausePlay,
                 CONFIG.COLORS.YELLOW,
-                state.pauseStatus
+                !state.pauseStatus  // ✅ FIXED: Yellow when playing (not paused)
             );
         }
+
+        console.log(`⏯️ Pause state: ${previousState} → ${state.pauseStatus} (${state.pauseStatus ? 'PAUSED' : 'PLAYING'})`);
     } catch (error) {
         console.error("❌ Error toggling pause/play:", error);
     }
@@ -134,10 +147,20 @@ export function toggleLock() {
 
 /**
  * Toggle button enabled/disabled state.
+ * ✅ FIXED: Now properly handles explicit state values
+ * @param {boolean|null} explicitState - Explicit disabled state (true=disabled, false=enabled), or null to toggle
  */
-export function toggleButtonState() {
+export function toggleButtonState(explicitState = null) {
     try {
-        state.isButtonDisable = !state.isButtonDisable;
+        const previousState = state.isButtonDisable;
+
+        if (explicitState !== null && explicitState !== undefined) {
+            // Explicit state provided - set it directly (no toggle)
+            state.isButtonDisable = explicitState;
+        } else {
+            // No explicit state - toggle current state
+            state.isButtonDisable = !state.isButtonDisable;
+        }
 
         // Round buttons
         CONFIG.ROUNDS.forEach((round) => {
@@ -150,9 +173,17 @@ export function toggleButtonState() {
         if (elements.pausePlay)
             elements.pausePlay.disabled = state.isButtonDisable;
         if (elements.finish) elements.finish.disabled = state.isButtonDisable;
-        if (elements.start) elements.start.disabled = !state.isButtonDisable;
+        if (elements.start) elements.start.disabled = !state.isButtonDisable; // START is opposite
         if (elements.prev) elements.prev.disabled = state.isButtonDisable;
         if (elements.next) elements.next.disabled = state.isButtonDisable;
+
+        // ✅ FIXED: Special buttons that should ALWAYS be enabled
+        // Refresh button should always work for emergency reset
+        if (elements.refresh) elements.refresh.disabled = false;
+        // Lock button should always work for submission control
+        if (elements.lock) elements.lock.disabled = false;
+
+        console.log(`🔘 Button state: ${previousState} → ${state.isButtonDisable} (${state.isButtonDisable ? 'DISABLED' : 'ENABLED'})`);
     } catch (error) {
         console.error("❌ Error toggling button state:", error);
     }

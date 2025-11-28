@@ -75,7 +75,7 @@ const BUTTON_CONFIG = [
     { id: 'binaan-merah-kedua', corner: CONFIG.CORNERS.RED, type: 'binaan-kedua', action: 'penalty' },
     { id: 'peringatan-merah-pertama', corner: CONFIG.CORNERS.RED, type: 'peringatan-pertama', action: 'penalty' },
     { id: 'peringatan-merah-kedua', corner: CONFIG.CORNERS.RED, type: 'peringatan-kedua', action: 'penalty' },
-    { id: 'peringatan-merah-ketiga', corner: CONFIG.CORNERS.RED, type: 'peringatan-ketiga', action: 'disqualify', opponent: CONFIG.CORNERS.BLUE },
+    { id: 'peringatan-merah-ketiga', corner: CONFIG.CORNERS.RED, type: 'peringatan-ketiga', action: 'disqualify', winner: CONFIG.CORNERS.BLUE },
 
     // BLUE CORNER PENALTIES
     { id: 'teguran-biru-pertama', corner: CONFIG.CORNERS.BLUE, type: 'teguran-pertama', action: 'penalty' },
@@ -84,7 +84,7 @@ const BUTTON_CONFIG = [
     { id: 'binaan-biru-kedua', corner: CONFIG.CORNERS.BLUE, type: 'binaan-kedua', action: 'penalty' },
     { id: 'peringatan-biru-pertama', corner: CONFIG.CORNERS.BLUE, type: 'peringatan-pertama', action: 'penalty' },
     { id: 'peringatan-biru-kedua', corner: CONFIG.CORNERS.BLUE, type: 'peringatan-kedua', action: 'penalty' },
-    { id: 'peringatan-biru-ketiga', corner: CONFIG.CORNERS.BLUE, type: 'peringatan-ketiga', action: 'disqualify', opponent: CONFIG.CORNERS.RED },
+    { id: 'peringatan-biru-ketiga', corner: CONFIG.CORNERS.BLUE, type: 'peringatan-ketiga', action: 'disqualify', winner: CONFIG.CORNERS.RED },
 
     // DROP SCORES
     { id: 'jatuhan-merah-plus', corner: CONFIG.CORNERS.RED, score: CONFIG.DROP_SCORES.VALID, action: 'score' },
@@ -92,9 +92,10 @@ const BUTTON_CONFIG = [
     { id: 'jatuhan-biru-plus', corner: CONFIG.CORNERS.BLUE, score: CONFIG.DROP_SCORES.VALID, action: 'score' },
     { id: 'jatuhan-biru-minus', corner: CONFIG.CORNERS.BLUE, score: CONFIG.DROP_SCORES.INVALID, action: 'score' },
 
-    // DISQUALIFICATIONS
-    { id: 'disk-merah', corner: CONFIG.CORNERS.RED, action: 'disqualify', opponent: CONFIG.CORNERS.BLUE },
-    { id: 'disk-biru', corner: CONFIG.CORNERS.BLUE, action: 'disqualify', opponent: CONFIG.CORNERS.RED }
+    // DISQUALIFICATIONS (WMP - Winner Must be Proclaimed)
+    // ✅ FIXED: disk-merah declares RED as winner, disk-biru declares BLUE as winner
+    { id: 'disk-merah', corner: CONFIG.CORNERS.RED, action: 'disqualify', winner: CONFIG.CORNERS.RED },
+    { id: 'disk-biru', corner: CONFIG.CORNERS.BLUE, action: 'disqualify', winner: CONFIG.CORNERS.BLUE }
 ];
 
 /**
@@ -245,7 +246,7 @@ function getHandlerForConfig(config) {
             }
 
         case 'disqualify':
-            return () => handleDisqualification(config.opponent);
+            return () => handleDisqualification(config.winner);
 
         default:
             console.warn(`⚠️ Unknown action: ${config.action}`);
@@ -302,7 +303,7 @@ function handleOperatorAction(event) {
         },
         'finish': () => {
             console.log('✅ Match finished');
-            localStorage.removeItem(CONFIG.STORAGE.DEWAN_DATA);
+            localStorage.clear();
             cekWinner();
         },
         'round': () => {
@@ -315,6 +316,11 @@ function handleOperatorAction(event) {
             clearIndicator();
             resetDropCounters();  // ✅ Reset drop tracking for new round
             changeRoundDewan(event.activeRound);
+            // ✅ FIXED: Re-enable actions after round change completes (1 second delay)
+            setTimeout(() => {
+                enabledAction(true);
+                console.log('✅ Actions re-enabled for new round');
+            }, 1000);
         },
         'pause': () => {
             console.log('⏸️ Match paused');
@@ -326,7 +332,7 @@ function handleOperatorAction(event) {
         },
         'reset': () => {
             console.log('🔄 Match reset');
-            localStorage.removeItem(CONFIG.STORAGE.DEWAN_DATA);
+            localStorage.clear();
             location.reload();
         }
     };

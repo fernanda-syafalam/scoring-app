@@ -6,12 +6,13 @@ import { showError } from "./dom.js";
 /**
  * Update match state on server.
  * @param {string} action - Action type.
+ * @returns {Promise} Axios promise for the request
  */
 export function updateMatch(action = CONFIG.ACTIONS.ROUND) {
     try {
         if (!state.partaiData || !state.userData) {
             console.warn("⚠️ Missing required data for match update");
-            return;
+            return Promise.resolve(); // Return resolved promise if no data
         }
 
         const payload = {
@@ -27,56 +28,77 @@ export function updateMatch(action = CONFIG.ACTIONS.ROUND) {
             },
         };
 
-        axios.post(CONFIG.ENDPOINTS.OPERATOR_UPDATE, payload).catch((error) => {
+        // ✅ FIXED: Return the axios promise so callers can wait for completion
+        const request = axios.post(CONFIG.ENDPOINTS.OPERATOR_UPDATE, payload).catch((error) => {
             console.error("❌ Failed to update match:", error);
+            throw error; // Re-throw so caller knows about the error
         });
 
-        // Save state
-        if (action !== CONFIG.ACTIONS.FINISH) {
-            saveData(
-                action === CONFIG.ACTIONS.START,
-                action === CONFIG.ACTIONS.PAUSE ||
-                    action === CONFIG.ACTIONS.PLAY
-            );
+        // ✅ FIXED: Simplified saveData() call - no more confusing parameters
+        // Save state after any action except finish and reset
+        if (action !== CONFIG.ACTIONS.FINISH && action !== CONFIG.ACTIONS.RESET) {
+            saveData();
         }
 
         if (action === CONFIG.ACTIONS.RESET) {
             localStorage.clear();
         }
+
+        return request;
     } catch (error) {
         console.error("❌ Error updating match:", error);
         showError("Failed to update match state");
+        return Promise.reject(error); // Return rejected promise on error
     }
 }
 
 /**
  * Upload winner selection to server.
  * @param {string} winner - Winner corner ('merah' or 'biru').
+ * @param {string} winMethod - Win method ('Teknik' or 'Diskualifikasi'). Defaults to 'Diskualifikasi' for operator selection.
  */
-export function uploadWinnerData(winner) {
+export function uploadWinnerData(winner, winMethod = 'Diskualifikasi') {
     try {
         if (!state.partaiData || !state.canSubmit) {
+            console.warn('⚠️ Cannot upload winner: missing data or submission locked');
             return;
         }
 
+        // Determine winner information
+        const isRed = winner === CONFIG.ACTIONS.WINNER_RED;
+        const winnerName = isRed ? state.partaiData.sudut_merah : state.partaiData.sudut_biru;
+        const winnerCorner = isRed ? "Merah" : "Biru";
+        const winnerContingent = isRed
+            ? state.partaiData.contingen_sudut_merah
+            : state.partaiData.contingen_sudut_biru;
+
+        // ✅ FIXED: Added scores - get from current match state or default to 0
+        // In operator view, we may not have real-time scores, so we use 0 as placeholder
+        // Real scores should come from dewan/juri views
         const winnerData = {
-            name:
-                winner === CONFIG.ACTIONS.WINNER_RED
-                    ? state.partaiData.sudut_merah
-                    : state.partaiData.sudut_biru,
-            corner: winner === CONFIG.ACTIONS.WINNER_RED ? "merah" : "biru",
-            contingent:
-                winner === CONFIG.ACTIONS.WINNER_RED
-                    ? state.partaiData.contingen_sudut_merah
-                    : state.partaiData.contingen_sudut_biru,
+            name: winnerName,
+            corner: winnerCorner,
+            contingent: winnerContingent,
+            winMethod: winMethod, // ✅ NEW: Win method
+            redScore: 0,          // ✅ NEW: Placeholder (actual scores from judges)
+            blueScore: 0,         // ✅ NEW: Placeholder (actual scores from judges)
+            // Additional match data for records
+            redName: state.partaiData.sudut_merah,
+            blueName: state.partaiData.sudut_biru,
+            redContingent: state.partaiData.contingen_sudut_merah,
+            blueContingent: state.partaiData.contingen_sudut_biru,
+            babak: state.partaiData.babak,
+            activeRound: state.activeRound,
         };
+
+        console.log('📤 Uploading winner data:', winnerData);
 
         axios
             .post(CONFIG.ENDPOINTS.WINNER, {
-                message: {
-                    action: "modal-winner",
-                    data: winnerData,
-                },
+                message: winnerData,
+            })
+            .then(() => {
+                console.log('✅ Winner data uploaded successfully');
             })
             .catch((error) => {
                 console.error("❌ Failed to upload winner data:", error);

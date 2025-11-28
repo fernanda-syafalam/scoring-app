@@ -425,6 +425,7 @@
     </div>
 
     <script src="{{ mix('js/ketuaPertandingan.js') }}"></script>
+    <script src="{{ mix('js/winnerModal.js') }}"></script>
 </body>
 
 </html>

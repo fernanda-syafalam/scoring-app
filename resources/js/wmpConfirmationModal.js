@@ -305,20 +305,24 @@ function broadcastWinner(winnerData) {
     try {
         console.log('📤 Broadcasting winner:', winnerData);
 
+        // ✅ FIXED: Match WinnerEvent format - needs 'action' and 'data' properties
         axios.post(CONFIG.ENDPOINTS.WINNER, {
             message: {
-                name: winnerData.winnerName,
-                corner: winnerData.winnerCorner,
-                contingent: winnerData.winnerContingent,
-                winMethod: winnerData.winMethod,
-                redScore: winnerData.redScore,
-                blueScore: winnerData.blueScore,
-                redName: winnerData.redName,
-                blueName: winnerData.blueName,
-                redContingent: winnerData.redContingent,
-                blueContingent: winnerData.blueContingent,
-                babak: winnerData.babak,
-                activeRound: winnerData.activeRound
+                action: 'modal-winner',
+                data: {
+                    name: winnerData.winnerName,
+                    corner: winnerData.winnerCorner,
+                    contingent: winnerData.winnerContingent,
+                    winMethod: winnerData.winMethod,
+                    redScore: winnerData.redScore,
+                    blueScore: winnerData.blueScore,
+                    redName: winnerData.redName,
+                    blueName: winnerData.blueName,
+                    redContingent: winnerData.redContingent,
+                    blueContingent: winnerData.blueContingent,
+                    babak: winnerData.babak,
+                    activeRound: winnerData.activeRound
+                }
             }
         })
         .then(() => {

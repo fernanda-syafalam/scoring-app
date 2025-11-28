@@ -170,9 +170,9 @@ function setupWebSocketListeners() {
         // Listen for operator controls
         channelOperator.listen(`.operator.${userData.gelanggang_id}`, (event) => {
             try {
-                handleOperatorEvent(event);
+                handleOperatorAction(event);
             } catch (error) {
-                console.error('❌ Error handling operator event:', error);
+                console.error('❌ Error handling operator action:', error);
             }
         });
 
@@ -215,10 +215,10 @@ function handleJudgeUpdate(event) {
 }
 
 /**
- * Handle operator events (start, pause, finish, round, etc.)
- * @param {Object} event - Operator event data
+ * Handle operator actions (start, pause, finish, round, etc.)
+ * @param {Object} event - Operator action data
  */
-function handleOperatorEvent(event) {
+function handleOperatorAction(event) {
     try {
         if (!event || typeof event !== 'object') {
             console.warn('⚠️ Invalid operator event:', event);
@@ -489,7 +489,7 @@ export {
     init,
     CONFIG,
     state,
-    handleOperatorEvent,
+    handleOperatorAction,
     updateTimer,
     startTimer,
     displayTimeLeft,

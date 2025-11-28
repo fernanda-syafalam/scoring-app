@@ -190,6 +190,7 @@
     <script type="module" src="{{ mix('js/scoringJuri.js') }}"></script>
     <script type="module" src="{{ mix('js/scoreUpdate.js') }}"></script>
     <script src="{{ mix('js/dropVerification.js') }}"></script>
+    <script src="{{ mix('js/winnerModal.js') }}"></script>
 </body>
 
 </html>

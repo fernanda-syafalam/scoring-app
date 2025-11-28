@@ -3,6 +3,7 @@ import {
     setElementColor,
     toggleButtonState,
     togglePausePlay,
+    toggleLock,
     changeRoundIndicator,
     changeRoundStatus,
     showError,
@@ -87,15 +88,23 @@ function handleFinish() {
 
 /**
  * Handle refresh (reset) button click.
+ * ✅ FIXED: Wait for reset request to complete before reloading page
  */
-function handleRefresh() {
+async function handleRefresh() {
     try {
         console.log("🔄 Resetting match...");
-        updateMatch(CONFIG.ACTIONS.RESET);
+
+        // Wait for reset request to complete before reloading
+        await updateMatch(CONFIG.ACTIONS.RESET);
+
+        console.log("✅ Reset request sent successfully");
         localStorage.clear();
         location.reload();
     } catch (error) {
         console.error("❌ Error refreshing:", error);
+        // Still reload even if request fails
+        localStorage.clear();
+        location.reload();
     }
 }
 
@@ -164,7 +173,8 @@ export function handleRoundDone() {
             changeRoundIndicator(state.activeRound, nextRound);
             state.activeRound = nextRound;
             updateMatch();
-            togglePausePlay();
+            // ✅ FIXED: Removed togglePausePlay() - causes wrong state after round change
+            // Match should remain in current pause/play state between rounds
         }
     } catch (error) {
         console.error("❌ Error handling round done:", error);

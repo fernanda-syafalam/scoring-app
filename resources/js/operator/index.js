@@ -1,4 +1,4 @@
-import { getUserData, getPartaiData, showError } from "./dom.js";
+import { getUserData, getPartaiData, showError, togglePausePlay } from "./dom.js";
 import { setupChannels } from "./websockets.js";
 import { setupEventListeners } from "./events.js";
 import { loadSavedData } from "./persistence.js";
@@ -29,6 +29,12 @@ function init() {
         if (localStorage.getItem(CONFIG.STORAGE.OPERATOR_DATA)) {
             console.log("📦 Restoring saved operator state");
             loadSavedData();
+        } else {
+            // ✅ FIXED: Initialize pause button UI on first load
+            // Initial state: pauseStatus = false (not paused/playing)
+            // Button should show "MULAI" (ready to pause when clicked)
+            console.log("🆕 First load - initializing pause button state");
+            togglePausePlay(false);  // Explicitly set to "not paused" state
         }
 
         console.log("✅ Operator Module initialized successfully");

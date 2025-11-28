@@ -438,6 +438,7 @@
     </div>
 
     <script src="{{ mix('js/dropVerification.js') }}"></script>
+    <script src="{{ mix('js/winnerModal.js') }}"></script>
     <script type="module" src="{{ mix('js/papanScore.js') }}"></script>
 </body>
 

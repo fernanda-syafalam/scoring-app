@@ -8,22 +8,21 @@ import {
 
 /**
  * Save operator state to localStorage.
- * @param {boolean} isFromStart - Called from start action.
- * @param {boolean} isFromPause - Called from pause/play action.
+ * ✅ FIXED: Simplified to always save current state directly
+ * No more confusing conditional logic based on call source
  */
-export function saveData(isFromStart = false, isFromPause = false) {
+export function saveData() {
     try {
         const data = {
-            pauseStatus: isFromPause ? !state.pauseStatus : state.pauseStatus,
-            isButtonDisable: isFromStart
-                ? state.isButtonDisable
-                : !state.isButtonDisable,
+            pauseStatus: state.pauseStatus,
+            isButtonDisable: state.isButtonDisable,
             activeRound: state.activeRound,
         };
         localStorage.setItem(
             CONFIG.STORAGE.OPERATOR_DATA,
             JSON.stringify(data)
         );
+        console.log('💾 Operator state saved:', data);
     } catch (error) {
         console.error("❌ Error saving data:", error);
     }
@@ -43,9 +42,12 @@ export function loadSavedData() {
             return;
         }
 
+        // ✅ FIXED: Set state values from saved data
         state.pauseStatus = data.pauseStatus;
         state.isButtonDisable = data.isButtonDisable;
         state.activeRound = data.activeRound;
+
+        console.log(`📦 Restoring state: pauseStatus=${data.pauseStatus}, isButtonDisable=${data.isButtonDisable}, activeRound=${data.activeRound}`);
 
         // Update UI to match saved state
         const roundNum = parseInt(state.activeRound.split("-")[1]);
@@ -56,8 +58,10 @@ export function loadSavedData() {
             changeRoundIndicator(currentRound, nextRound);
         }
 
-        toggleButtonState();
-        togglePausePlay();
+        // ✅ FIXED: Pass explicit state values instead of toggling
+        // These functions now accept explicit parameters to set state directly
+        toggleButtonState(data.isButtonDisable);  // Set to saved disabled state
+        togglePausePlay(data.pauseStatus);        // Set to saved pause status
 
         console.log("✅ Restored operator state from localStorage");
     } catch (error) {

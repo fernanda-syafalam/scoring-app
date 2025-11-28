@@ -235,6 +235,7 @@
     <script src="{{ mix('js/scoreUpdate.js') }}"></script>
     <script src="{{ mix('js/scoringDewan.js') }}"></script>
     <script src="{{ mix('js/dropVerification.js') }}"></script>
+    <script src="{{ mix('js/winnerModal.js') }}"></script>
     <script src="{{ mix('js/wmpConfirmationModal.js') }}"></script>
 </body>
 
