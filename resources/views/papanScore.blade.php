@@ -55,6 +55,7 @@
             </div>
         </div>
         <x-drop-verification-result />
+        <x-drop-verification-papanscore />
     </header>
 
     <div class="flex justify-between mt-[1%] overflow-hidden">

@@ -5,7 +5,7 @@ import { CONFIG } from "./constants.js";
  */
 export const state = {
     activeRound: "round-1",
-    pauseStatus: false,
+    pauseStatus: true, // ✅ FIXED: Default to paused (true) so button shows "MULAI" initially
     isButtonDisable: true,
     matchTime: CONFIG.DEFAULT_MATCH_TIME,
     users: [],

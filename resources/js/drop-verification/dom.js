@@ -20,6 +20,20 @@ export const elements = {
         red: null,
         result: null,
     },
+    dewanOverride: {
+        blue: null,
+        invalid: null,
+        red: null,
+    },
+    dewanButtons: {
+        cancel: null,
+        confirm: null,
+    },
+    papanScoreResult: {
+        modal: null,
+        display: null,
+        countdown: null,
+    },
 };
 
 export function cacheElements() {
@@ -41,6 +55,20 @@ export function cacheElements() {
     elements.choice.invalid = document.getElementById("choice2");
     elements.choice.red = document.getElementById("choice3");
     elements.choice.result = document.getElementById("choice-result");
+
+    // Dewan override buttons
+    elements.dewanOverride.blue = document.getElementById("dewan-override-blue");
+    elements.dewanOverride.invalid = document.getElementById("dewan-override-invalid");
+    elements.dewanOverride.red = document.getElementById("dewan-override-red");
+
+    // Dewan action buttons
+    elements.dewanButtons.cancel = document.getElementById("cancel-popup");
+    elements.dewanButtons.confirm = document.getElementById("confirm-popup");
+
+    // Papan score result modal
+    elements.papanScoreResult.modal = document.getElementById("dropVerificationResultModal");
+    elements.papanScoreResult.display = document.getElementById("papan-score-result");
+    elements.papanScoreResult.countdown = document.getElementById("auto-close-countdown");
 }
 
 export function getUserData() {
@@ -110,14 +138,28 @@ function setElementClasses(element, activeClass) {
     element.classList.add(activeClass);
 }
 
-export function updatePopupState(redPopup, bluePopup) {
+export function updatePopupState(redPopup, bluePopup, showResultOnPapanScore = false) {
     state.redPopup = redPopup;
     state.bluePopup = bluePopup;
+    state.showResultOnPapanScore = showResultOnPapanScore;
 
+    const currentPath = window.location.pathname;
+
+    // Show papan score final result if flag is true
+    if (showResultOnPapanScore && currentPath === PATHS.PAPAN_SCORE) {
+        hidePopup(); // Hide judge voting modal if open
+        // Result will be shown by showPapanScoreResult function
+        return;
+    }
+
+    // Show modal when CALL is clicked
     if (redPopup || bluePopup) {
+        // For papan_score: show judge voting modal (so spectators can see judge votes live)
+        // For judges and dewan: show their respective modals
         showPopup();
     } else {
         hidePopup();
+        hidePapanScoreResult(); // Also hide papan score result when closing
     }
 }
 
@@ -172,4 +214,106 @@ export function updateChoiceIndicator(choice) {
 
 export function showErrorMessage(message) {
     console.error(message);
+}
+
+/**
+ * Show papan score result modal with auto-close
+ * @param {string} result - The final result (BLUE CORNER/RED CORNER/INVALID)
+ * @param {number} autoCloseSeconds - Seconds before auto-close (default: 5)
+ */
+export function showPapanScoreResult(result, autoCloseSeconds = 5) {
+    if (!elements.papanScoreResult.modal || !elements.papanScoreResult.display) {
+        console.warn("[DropVerification] Papan score result elements not found");
+        return;
+    }
+
+    // Set result text and color
+    elements.papanScoreResult.display.textContent = result;
+
+    // Apply color based on result
+    const colorClasses = Object.values(CSS_CLASSES);
+    elements.papanScoreResult.display.classList.remove(...colorClasses);
+
+    if (result === CORNERS.BLUE) {
+        elements.papanScoreResult.display.classList.add(CSS_CLASSES.BG_BLUE);
+    } else if (result === CORNERS.RED) {
+        elements.papanScoreResult.display.classList.add(CSS_CLASSES.BG_RED);
+    } else if (result === CORNERS.INVALID) {
+        elements.papanScoreResult.display.classList.add(CSS_CLASSES.BG_YELLOW);
+    } else {
+        elements.papanScoreResult.display.classList.add(CSS_CLASSES.BG_GRAY);
+    }
+
+    // Show modal
+    elements.papanScoreResult.modal.style.display = "block";
+
+    // Start countdown
+    let countdown = autoCloseSeconds;
+    if (elements.papanScoreResult.countdown) {
+        elements.papanScoreResult.countdown.textContent = countdown;
+    }
+
+    const countdownInterval = setInterval(() => {
+        countdown--;
+        if (elements.papanScoreResult.countdown) {
+            elements.papanScoreResult.countdown.textContent = countdown;
+        }
+
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            hidePapanScoreResult();
+        }
+    }, 1000);
+
+    console.log(`[DropVerification] Showing result: ${result} (auto-close in ${autoCloseSeconds}s)`);
+}
+
+/**
+ * Hide papan score result modal
+ */
+export function hidePapanScoreResult() {
+    if (!elements.papanScoreResult.modal) return;
+
+    elements.papanScoreResult.modal.style.display = "none";
+
+    // Reset display
+    if (elements.papanScoreResult.display) {
+        elements.papanScoreResult.display.textContent = "";
+        const colorClasses = Object.values(CSS_CLASSES);
+        elements.papanScoreResult.display.classList.remove(...colorClasses);
+        elements.papanScoreResult.display.classList.add(CSS_CLASSES.BG_GRAY);
+    }
+}
+
+/**
+ * Highlight dewan's selected choice
+ * @param {string} choice - Selected choice (BLUE CORNER/RED CORNER/INVALID)
+ */
+export function highlightDewanSelection(choice) {
+    if (!elements.dewanOverride.blue || !elements.dewanOverride.red || !elements.dewanOverride.invalid) {
+        return;
+    }
+
+    // Remove all focus/active states
+    const colorClasses = Object.values(CSS_CLASSES);
+    elements.dewanOverride.blue.classList.remove(...colorClasses);
+    elements.dewanOverride.red.classList.remove(...colorClasses);
+    elements.dewanOverride.invalid.classList.remove(...colorClasses);
+
+    // Add gray default to all
+    elements.dewanOverride.blue.classList.add(CSS_CLASSES.BG_GRAY);
+    elements.dewanOverride.red.classList.add(CSS_CLASSES.BG_GRAY);
+    elements.dewanOverride.invalid.classList.add(CSS_CLASSES.BG_GRAY);
+
+    // Highlight selected choice
+    if (choice === CORNERS.BLUE) {
+        elements.dewanOverride.blue.classList.remove(CSS_CLASSES.BG_GRAY);
+        elements.dewanOverride.blue.classList.add(CSS_CLASSES.BG_BLUE);
+    } else if (choice === CORNERS.RED) {
+        elements.dewanOverride.red.classList.remove(CSS_CLASSES.BG_GRAY);
+        elements.dewanOverride.red.classList.add(CSS_CLASSES.BG_RED);
+    } else if (choice === CORNERS.INVALID) {
+        elements.dewanOverride.invalid.classList.remove(CSS_CLASSES.BG_GRAY);
+        elements.dewanOverride.invalid.classList.add(CSS_CLASSES.BG_YELLOW);
+    }
 }

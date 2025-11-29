@@ -43,7 +43,7 @@
                 </div>
             </div>
         </div>
-        <x-drop-verification-result />
+        <x-drop-verification-dewan />
     </header>
     <s class="text-whiteDefault">1</s>
     <div class="flex justify-between">

@@ -12,6 +12,9 @@ class DropVerificationData
     public string $juriKetiga;
     public bool $redPopup;
     public bool $bluePopup;
+    public string $dewanChoice;
+    public bool $showResultOnPapanScore;
+    public string $finalResult;
     public int $gelanggangId;
     public string $role;
 
@@ -22,7 +25,10 @@ class DropVerificationData
         $this->juriKetiga = $message['juriKetiga'] ?? '';
         $this->redPopup = $message['redPopup'] ?? false;
         $this->bluePopup = $message['bluePopup'] ?? false;
-        
+        $this->dewanChoice = $message['dewanChoice'] ?? '';
+        $this->showResultOnPapanScore = $message['showResultOnPapanScore'] ?? false;
+        $this->finalResult = $message['finalResult'] ?? '';
+
         $user = Auth::user();
         if (!$user) {
             throw new \Exception("User not authenticated.");
@@ -61,6 +67,9 @@ class DropVerificationData
             'juri_ketiga' => $this->juriKetiga,
             'red_popup' => $this->redPopup,
             'blue_popup' => $this->bluePopup,
+            'dewan_choice' => $this->dewanChoice,
+            'show_result_on_papan_score' => $this->showResultOnPapanScore,
+            'final_result' => $this->finalResult,
             'id' => $this->role,
         ];
     }

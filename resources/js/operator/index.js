@@ -31,10 +31,10 @@ function init() {
             loadSavedData();
         } else {
             // ✅ FIXED: Initialize pause button UI on first load
-            // Initial state: pauseStatus = false (not paused/playing)
-            // Button should show "MULAI" (ready to pause when clicked)
+            // Initial state: pauseStatus = true (paused)
+            // Button should show "MULAI" (ready to start when clicked)
             console.log("🆕 First load - initializing pause button state");
-            togglePausePlay(false);  // Explicitly set to "not paused" state
+            togglePausePlay(true);  // Explicitly set to paused state - button shows "MULAI"
         }
 
         console.log("✅ Operator Module initialized successfully");

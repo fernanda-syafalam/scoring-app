@@ -10,6 +10,9 @@ export async function sendVerification(voteData) {
                 juriKetiga: voteData.juriKetiga || state.juriKetiga,
                 redPopup: voteData.redPopup ?? state.redPopup,
                 bluePopup: voteData.bluePopup ?? state.bluePopup,
+                dewanChoice: voteData.dewanChoice || state.dewanChoice || "",
+                showResultOnPapanScore: voteData.showResultOnPapanScore ?? state.showResultOnPapanScore ?? false,
+                finalResult: voteData.finalResult || state.finalResult || "",
             },
         });
 

@@ -1,5 +1,5 @@
-import { ROLE_IDS } from "./constants.js";
-import { updateJuryIndicators, updatePopupState } from "./dom.js";
+import { ROLE_IDS, PATHS } from "./constants.js";
+import { updateJuryIndicators, updatePopupState, showPapanScoreResult } from "./dom.js";
 
 export function setupWebSocketChannel(gelanggangId) {
     const channelName = `presence.dropVerification.${gelanggangId}`;
@@ -27,7 +27,19 @@ export function setupWebSocketChannel(gelanggangId) {
 function handleVerificationEvent(event) {
     try {
         updateJuryIndicators(event);
-        updatePopupState(event.red_popup, event.blue_popup);
+
+        // Check if we should show result on papan_score
+        const showResultOnPapanScore = event.show_result_on_papan_score || false;
+        const finalResult = event.final_result || "";
+
+        // Update popup state (handles showing/hiding modals based on role)
+        updatePopupState(event.red_popup, event.blue_popup, showResultOnPapanScore);
+
+        // If this is papan_score and we should show the result
+        if (showResultOnPapanScore && finalResult && window.location.pathname === PATHS.PAPAN_SCORE) {
+            console.log("[DropVerification] Showing result on papan_score:", finalResult);
+            showPapanScoreResult(finalResult);
+        }
     } catch (error) {
         console.error("[DropVerification] Event handling failed:", error);
     }
